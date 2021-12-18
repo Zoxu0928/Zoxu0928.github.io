@@ -1,27 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>这是测试文章</title>
-    <url>/2021/12/14/a/</url>
-    <content><![CDATA[<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p>测试测试<br><img src="images/108.png"></p>
+    <title>golang-map</title>
+    <url>/2021/12/18/golang-map/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h2 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h2><h3 id="1-Map的Value赋值"><a href="#1-Map的Value赋值" class="headerlink" title="(1) Map的Value赋值"></a>(1) Map的Value赋值</h3><blockquote>
+<p>下面代码编译会出现什么结果？</p>
+</blockquote>
+<blockquote>
+<p>test7.go</p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;fmt&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Student <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> list <span class="keyword">map</span>[<span class="keyword">string</span>]Student</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	list = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]Student)</span><br><span class="line"></span><br><span class="line">	student := Student&#123;<span class="string">&quot;Aceld&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line">	list[<span class="string">&quot;student&quot;</span>] = student</span><br><span class="line">	list[<span class="string">&quot;student&quot;</span>].Name = <span class="string">&quot;LDB&quot;</span></span><br><span class="line"></span><br><span class="line">	fmt.Println(list[<span class="string">&quot;student&quot;</span>])</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果</strong></p>
+<p>编译失败，<code>./test7.go:18:23: cannot assign to struct field list[&quot;student&quot;].Name in map</code></p>
+<p><strong>分析</strong></p>
+<p><code>map[string]Student</code> 的value是一个Student结构值，所以当<code>list[&quot;student&quot;] = student</code>,是一个值拷贝过程。而<code>list[&quot;student&quot;]</code>则是一个值引用。那么值引用的特点是<code>只读</code>。所以对<code>list[&quot;student&quot;].Name = &quot;LDB&quot;</code>的修改是不允许的。</p>
+<p><strong>方法一：</strong></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;fmt&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Student <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> list <span class="keyword">map</span>[<span class="keyword">string</span>]Student</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	list = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]Student)</span><br><span class="line"></span><br><span class="line">	student := Student&#123;<span class="string">&quot;Aceld&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line">	list[<span class="string">&quot;student&quot;</span>] = student</span><br><span class="line">	<span class="comment">//list[&quot;student&quot;].Name = &quot;LDB&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">        方法1:</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    tmpStudent := list[<span class="string">&quot;student&quot;</span>]</span><br><span class="line">    tmpStudent.Name = <span class="string">&quot;LDB&quot;</span></span><br><span class="line">    list[<span class="string">&quot;student&quot;</span>] = tmpStudent</span><br><span class="line"></span><br><span class="line">	fmt.Println(list[<span class="string">&quot;student&quot;</span>])</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>其中</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">    方法1:</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">tmpStudent := list[<span class="string">&quot;student&quot;</span>]</span><br><span class="line">tmpStudent.Name = <span class="string">&quot;LDB&quot;</span></span><br><span class="line">list[<span class="string">&quot;student&quot;</span>] = tmpStudent</span><br></pre></td></tr></table></figure>
+
+<p>是先做一次值拷贝，做出一个<code>tmpStudent副本</code>,然后修改该副本，然后再次发生一次值拷贝复制回去，<code>list[&quot;student&quot;] = tmpStudent</code>,但是这种会在整体过程中发生2次结构体值拷贝，性能很差。</p>
+<span id="more"></span>
+<p><strong>方法二</strong>：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;fmt&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Student <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> list <span class="keyword">map</span>[<span class="keyword">string</span>]*Student</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	list = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]*Student)</span><br><span class="line"></span><br><span class="line">	student := Student&#123;<span class="string">&quot;Aceld&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line">	list[<span class="string">&quot;student&quot;</span>] = &amp;student</span><br><span class="line">	list[<span class="string">&quot;student&quot;</span>].Name = <span class="string">&quot;LDB&quot;</span></span><br><span class="line"></span><br><span class="line">	fmt.Println(list[<span class="string">&quot;student&quot;</span>])</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>我们将map的类型的value由Student值，改成Student指针。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> list <span class="keyword">map</span>[<span class="keyword">string</span>]*Student</span><br></pre></td></tr></table></figure>
+
+<p>这样，我们实际上每次修改的都是指针所指向的Student空间，指针本身是常指针，不能修改，<code>只读</code>属性，但是指向的Student是可以随便修改的，而且这里并不需要值拷贝。只是一个指针的赋值。</p>
+<h3 id="2-map的遍历赋值"><a href="#2-map的遍历赋值" class="headerlink" title="(2) map的遍历赋值"></a>(2) map的遍历赋值</h3><hr>
+<blockquote>
+<p>以下代码有什么问题，说明原因</p>
+</blockquote>
+<blockquote>
+<p>test8.go</p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> student <span class="keyword">struct</span> &#123;</span><br><span class="line">    Name <span class="keyword">string</span></span><br><span class="line">    Age  <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//定义map</span></span><br><span class="line">    m := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]*student)</span><br><span class="line"></span><br><span class="line">    <span class="comment">//定义student数组</span></span><br><span class="line">    stus := []student&#123;</span><br><span class="line">        &#123;Name: <span class="string">&quot;zhou&quot;</span>, Age: <span class="number">24</span>&#125;,</span><br><span class="line">        &#123;Name: <span class="string">&quot;li&quot;</span>, Age: <span class="number">23</span>&#125;,</span><br><span class="line">        &#123;Name: <span class="string">&quot;wang&quot;</span>, Age: <span class="number">22</span>&#125;,</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//将数组依次添加到map中</span></span><br><span class="line">    <span class="keyword">for</span> _, stu := <span class="keyword">range</span> stus &#123;</span><br><span class="line">        m[stu.Name] = &amp;stu</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//打印map</span></span><br><span class="line">    <span class="keyword">for</span> k,v := <span class="keyword">range</span> m &#123;</span><br><span class="line">        fmt.Println(k ,<span class="string">&quot;=&gt;&quot;</span>, v.Name)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果</strong></p>
+<p>遍历结果出现错误，输出结果为</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">zhou =&gt; wang</span><br><span class="line">li =&gt; wang</span><br><span class="line">wang =&gt; wang</span><br></pre></td></tr></table></figure>
+
+<p>map中的3个key均指向数组中最后一个结构体。</p>
+<p><strong>分析</strong></p>
+<p>foreach中，stu是结构体的一个拷贝副本，所以<code>m[stu.Name]=&amp;stu</code>实际上一致指向同一个指针， 最终该指针的值为遍历的最后一个<code>struct的值拷贝</code>。 </p>
+<!-- ![](images/109-foreach.jpeg) -->
+<img src="/2021/12/18/golang-map/109-foreach.jpeg" class="" title="foreach">
+
+<p><strong>正确写法</strong></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> student <span class="keyword">struct</span> &#123;</span><br><span class="line">    Name <span class="keyword">string</span></span><br><span class="line">    Age  <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//定义map</span></span><br><span class="line">    m := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]*student)</span><br><span class="line"></span><br><span class="line">    <span class="comment">//定义student数组</span></span><br><span class="line">    stus := []student&#123;</span><br><span class="line">        &#123;Name: <span class="string">&quot;zhou&quot;</span>, Age: <span class="number">24</span>&#125;,</span><br><span class="line">        &#123;Name: <span class="string">&quot;li&quot;</span>, Age: <span class="number">23</span>&#125;,</span><br><span class="line">        &#123;Name: <span class="string">&quot;wang&quot;</span>, Age: <span class="number">22</span>&#125;,</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 遍历结构体数组，依次赋值给map</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(stus); i++  &#123;</span><br><span class="line">        m[stus[i].Name] = &amp;stus[i]</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//打印map</span></span><br><span class="line">    <span class="keyword">for</span> k,v := <span class="keyword">range</span> m &#123;</span><br><span class="line">        fmt.Println(k ,<span class="string">&quot;=&gt;&quot;</span>, v.Name)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<!-- ![](images/110-foreach2.jpeg) -->
+<img src="/2021/12/18/golang-map/110-foreach2.jpeg" class="" title="foreach2">
+
+<p><strong>运行结果</strong></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">zhou =&gt; zhou</span><br><span class="line">li =&gt; li</span><br><span class="line">wang =&gt; wang</span><br></pre></td></tr></table></figure>
+
+
+
 ]]></content>
       <categories>
-        <category>web前端</category>
+        <category>技术笔记</category>
       </categories>
       <tags>
-        <tag>博客</tag>
+        <tag>golang-map</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>2021-05-01 宜昌游记</title>
+    <url>/2021/12/14/yichang/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script>
+    <div id="aplayer-fXfhIPPd" class="aplayer aplayer-tag-marker meting-tag-marker"
+         data-id="569214247" data-server="netease" data-type="song" data-mode="circulation" data-autoplay="false" data-mutex="true" data-listmaxheight="340px" data-preload="auto" data-theme="#ad7a86"
+    ></div>
+<img src="/2021/12/14/yichang/yichang-1.jpeg" class="" title="三峡人家">
+<span id="more"></span>
+
+<img src="/2021/12/14/yichang/yichang-2.jpeg" class="" title="三峡人家">
+
+<img src="/2021/12/14/yichang/yichang-3.jpeg" class="" title="三峡人家">]]></content>
+      <categories>
+        <category>游记</category>
+      </categories>
+      <tags>
         <tag>旅行</tag>
       </tags>
   </entry>
   <entry>
-    <title>测试文章2</title>
-    <url>/2021/12/14/b/</url>
-    <content><![CDATA[]]></content>
+    <title>女朋友生气记录</title>
+    <url>/2021/12/18/angry-record/</url>
+    <content><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="抱歉, 这个密码看着不太对, 请再试试." data-whm="抱歉, 这个文章不能被校验, 不过您还是能看看解密后的内容.">
+  <script id="hbeData" type="hbeData" data-hmacdigest="fcd9d12dfe9a9772939b2db5d2ae7308373afa19df99df201a764d34f9c6d4e3">ecf9837243792bd3100919c99bb72774089bffa941b0522f81cb58daaf633372d7e4dc941023f98c387c120b8367f1140778fab0f2adce5604c27e5abee566efe025ef241d0dad6975d5d5c85d6fc82f043354a34e90d909ed996581bdb8fceec705e0e18165737cd44fa82849eac62a8bb67d2d28adbb09ce3787654de93399e5306d4dc58aebb3b6b2865038070dd678dab743bfa5b2874bc5bf0cb6f34b85f309ffffd99d4df63f4f1a3b643f94ecf20e01a9dd5c2e09eeb5832114997c3d674350c4dff47508485051e4bfd4228021d26d24d7a8589167758be7040f9ed4fc73edebc05e9402b1515d136edd911284afee05b64930d3c7f8bc7109b19fbc0963332a8ba354942a022ca5c34427cf71c3e8c2f87b64c6f4c17b9069ac1cc59ef1aa33de22e0d6252189fad27506983a2e5b9e9ecef7b1ed656c1373bef3f71b8eff509c08c5b214ae72b34fa883b94ba0474f775b602c970cb7aff4eb1b82016dad67fef845e1f569a40ceb369f9328fdd653dc1278182b25b373a195c64fe770d43584acc18fd66140f5fb755461792e93422232f86e44c004781e8b844f7bb050d555e8420a2f1486359540d4b2429e55bcfc3f29c21ed3e3b4e208f528a79d72d033791f3da61670653cb92cb9c1034861eca7c4c2d703007956d4f7d9d728c942cc2d7eb232035cda81afd3d266ea93c2027b062a23c0ea47d8dae50dd63cef55e4d36a29717d2d21748dd2deb4eb1343daab3b75ce924d53fbbfc5e648e363d2bd1c109b5711a1c54419cb51465cf7a628f29d15f4a5239be56ebb471c01e0078cf482ff12bd4aac2d813e8411bbe8bcb8fe8da2028f8360875634a7f2decc5b512089775ca54c0f6eba569aef841545b041f7630d017d9a8199fceda1f89ea4340800c2fa641175eaffa6c0d899fabb038df151e465c703f11afb11aac16c2b3a820c51e0e6d59099eb91d76607e496c1d85a4396388c4a7eecb260336f67f411f377830ea037e32a05e0ebd4e85ea555c4a219c049324477e4d072e5c0abdbeed776875fa1d00e5eed9f41265cc5a4a8991de3ea9a5dd6539483b83a21d86b4c20e256e73afd384ece59e90149d696e2cc735ab993590e379609896259705cd434b48e8ab483bd98316a45903aef68118e94aa9af18363d43b89e3d4e396fd1830c51a55546b850fd770321a539fa48c096a0a0e72cabe148bb8019dacdac9c8d21179a5bbe0c6773a69631f76bbde12630a7f1fb778ba7837dcb0dc7f12cd03a679529e312bcf76274f9e8675c52924400cfe3d31f7da2b0905de184c84fbc0976c607d7d3a1f004a6438629afd8c0070894df3320976cbd9ff92f16892fa1c4112bcd21d4843a1021dd7807b83a5a1dfff873aac3d6d8c0f4906323abb707f5280a47a2b751031e8db7d1537a3d1917dbd0e299559c43ea95c07131b9b272dfe83926201cc7df74583d840fbe7d1038d1e1633b8c797569115eee828517aa68cd24c2cb744feb94525e59ab4ea1f0528352f77be68c2d364987c94c97f3506d32136ae238ce87be4458e3c9885b5b6f28563915a8774b16b21f19d71759ff0e6efd2697292c477e13076bdadbc0ff1b26742960104f81065193e41b270677e7483d88475847417a1bea9e70f460ef62dd7b7642f766cbf0bb4679cbf293fc8e747abd250d5a5a8b7cf2d50d9cc3c03221a67cf4cd15709c21d14c1e6fd38f6803d965b34bef410996eddcceed645a68ab8f547043de15f3e2b904a2c2e2ae1b0c55eeb0ebc42efe6922c6fa62b077d4d084f5c17d0e11e5a2910ea92b229d7f250acbb685894eb06648f2a6b0ec00d20a72f5d9dfad03c960e748dd091f812e91767540a411d6bdf7c8a4759c526f31f1c803ca889ffc5d2e739f8ba91884aef9afd4d6b450c6164692a5d2ea935b4015768b30c96da2cc6633bffce30f94a7f5dfa0a945a09c20ae6c626d9ce096c32e98b5e1fa5776cfa6af1e6eae87a58f6d2bbefe09cc739999b8628dc3c63ce8344a83bdf5fba558748befe688e1ed5976c57902e677d25e42b317a438057c5b3f05ef1b7ee4e6e7d0d96efe7438d69353032d17f4f81fb09767594d51374435229b06ba8637aea2b9c3acb2745758ba8e55bf9debdccd9d53c4e9f71efbd7c29466a6214d71a8f0dbc4455853929ce1629e8c0a788cdcde8e66d0cd8974753a732c7a7a1a67655673b2f99390cfcef0cfac27d1c9d7c2974f9a89bd83f34afbe89c7e1168fa27ead91306ceba7f43c5df680e5f261f5054f2e7f69f1e23a68819781207626ee3a84e10d482e7f2a7aa488e21efbb759054ea811b183054ddea8004af96ad84de3c33230571b16797d073e2f01989258eb33d4a12ccccdcf2cc74832d61eec347a6ad9c6c6667374bc155c332639f661e3795ed3612be9a7e480947ae6c9e7720d75e4fb66ebe5882a8db5fc3fd2e877bfe39b48b7c15bcd5f58aa75deb398128c41f0ca3f297ba6ce7d273d4a0aa0b442f5dad05c392d79b1546baa3b38d4944d1ada8439169d78703742b6d61f95dae031a069200470b8b89f16a77cef2fc8e151511530e3205d9c0ef2201944f65ed8a7d3140d0e7c2b4d8ee9143ad0dc7d45f03ab27eaf577885f89f0653e991ea33f58c49dbe5110ec1d36df6da53aaa0e169ae2712a359a46a9098599f14911faff608d265965157cda24e7658af47c4717b103443e4065c446f35bc2ce5503936735641085499fc4a0ca1937ff5968593263b1ea6dbeba09e16576ebf428e4f67920b363b881fdec4b8b4d04c513632ad29f099a2c01ded9638a39e33656d1fe395ad279fe25b31eec0a7decbd17dfd862acd36404a19f69f2415ce713d139a1edf630403abcebb064a2c0522595b4e6471f5e29d242de3cb05fc93d5cbd2cd9f0e61103371c8de263a4a1ab66769ca2f186c464da80e839e0fc1257f3d157d80ec778e3466a6ef8d458ec8451106de55f9e2dfe3f44b4026b2053a7eda29749c4b4e1bd68228a9305a658fed36b14f3653c651e0189dcea0c1a2b8a1146820f75232c709c24d7b8910b229d2d1cba4fef756ea606a4ec2a1aaddf714a37813c8072a133e8366239a91255f197edaaf714cdee884d0ae55f76ec40abf6d3465a042f840122bf142ac9617fc8905da74c646c3f71aa4c1d80792e4e84748dfb3b0c17766213f6ee478e67d547f57212477e06842e22a6ae21f17acc0181efd9eb355e55886c293436b0b95073df2d2421e00cd45400948af1d64b3db5bc5c96e521a52cb67744e0ebf1ae66df3996d97304bba79580aa7d867c85ae9f994fd23ca37fa6ea7ed57bd9b67fcc7c940921577d9dfef</script>
+  <div class="hbe hbe-content">
+    <div class="hbe hbe-input hbe-input-default">
+      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
+      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
+        <span class="hbe hbe-input-label-content hbe-input-label-content-default">您好, 这里需要密码.</span>
+      </label>
+    </div>
+  </div>
+</div>
+<script data-pjax src="/lib/hbe.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css">]]></content>
       <categories>
-        <category>技术</category>
+        <category>我们</category>
       </categories>
       <tags>
-        <tag>技术</tag>
+        <tag>关于我们</tag>
       </tags>
   </entry>
 </search>
