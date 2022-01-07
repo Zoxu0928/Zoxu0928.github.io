@@ -286,10 +286,104 @@
 
 
 
-<main class="container content">
+<main class="post-container content">
 
     
-    <!-- 文章内容详情 -->
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        width: 345px;
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        padding: 35px 0 15px 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content {
+        padding-bottom: 30px;
+        overflow: auto;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+
+        position: absolute;
+        right: 23.5vw;
+        display: block;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
 <div id="artDetail">
     <div class="card">
         <div class="card-content article-info">
@@ -345,22 +439,52 @@
         <div class="card-content article-card-content">
             <div id="articleContent">
                 
-    <div id="aplayer-txUDBYVp" class="aplayer aplayer-tag-marker meting-tag-marker"
+    <div id="aplayer-jLAZlTds" class="aplayer aplayer-tag-marker meting-tag-marker"
          data-id="569214247" data-server="netease" data-type="song" data-mode="circulation" data-autoplay="true" data-mutex="true" data-listmaxheight="340px" data-preload="auto" data-theme="#ad7a86"
     ></div>
 <blockquote>
-<p>2020年疫情之后就没怎么出去旅行过，这次旅行也是期待了很久。<br>出发之前想了很多地方，要么担心疫情要么受时间限制。<br>有一天，她说，我想喝武汉的排骨藕汤了，我说，走，咱们出发！</p>
+<p>2020年疫情之后就没怎么出去旅行过，这次旅行也是期待了很久。<br>出发之前想了很多地方，要么担心疫情要么受时间限制。<br>有一天，ZoSai说，我想喝武汉的排骨藕汤了，我说，走，咱们出发！</p>
 </blockquote>
-<p>5月1号凌晨我们出发啦！经过5个小时驾车，我们到达了第一站，信阳师范学院，来接着妹妹，做个短暂的休息。</p>
+<h2 id="Day1-–武汉"><a href="#Day1-–武汉" class="headerlink" title="Day1 –武汉"></a>Day1 –武汉</h2><p>5月1号凌晨我们出发啦！经过5个小时驾车，我们到达了第一站，信阳师范学院，来接着妹妹，做个短暂的休息。</p>
 <img src="/2021/06/05/yichang/xinyang1.jpeg" class="" title="信阳的早晨">
 <img src="/2021/06/05/yichang/xinyang2.jpeg" class="" title="信阳的早晨">
 
+<p>短暂休息过后继续出发，五一假期果然是很堵车啊，到了武汉都中午啦，直奔亢龙太子酒轩，有点遗憾的是排骨藕汤因为藕过了季节，都没有啦。带着但是来都来了，带着遗憾还是在他家吃了</p>
+<img src="/2021/06/05/yichang/chide.jpeg" class="" title="各种吃吃吃">
+
+<p>计划在武汉休整一天，然后去宜昌转转，于是下午就出门啦，去江边逛一逛，去吃一些小吃</p>
+<img src="/2021/06/05/yichang/shapaozi.jpeg" class="" title="傻狍子-ZoSai">
+<img src="/2021/06/05/yichang/qinglvzhuang.jpeg" class="" title="武汉地铁站">
+<p>不知不觉天黑啦，我们也来到了武汉江滩</p>
+<img src="/2021/06/05/yichang/wuhanjiangtan-1.jpeg" class="" title="江滩建筑">
+
+<h2 id="Day2-–宜昌"><a href="#Day2-–宜昌" class="headerlink" title="Day2 –宜昌"></a>Day2 –宜昌</h2><h3 id="江边散步"><a href="#江边散步" class="headerlink" title="江边散步"></a>江边散步</h3><p>第二天一早就从武汉出发去往了宜昌，宜昌是一个生活节奏很慢的城市，在宜昌待的三天整个人都慢了下来，非常舒服</p>
+<img src="/2021/06/05/yichang/jiangbian-1.jpeg" class="" title="宜昌江滩">
+<p>江滩还用无人机拍了一小段视频~</p>
+
+<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
+<iframe src="//player.bilibili.com/player.html?aid=205420506&bvid=BV1Bh411m7AL&cid=335880504&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" ></iframe></div>
+
+
+<h3 id="把把烧"><a href="#把把烧" class="headerlink" title="把把烧"></a>把把烧</h3><p>宜昌非常有名的小吃把把烧 配上夺命大乌苏，绝绝子<br>对了，宜昌的萝卜饺子也特别好吃，还有什么鱼鱼，可惜光顾着吃了，忘记拍照啦</p>
+<img src="/2021/06/05/yichang/babashao.jpeg" class="" title="把把烧">
+
+<h2 id="Day3-–三峡人家"><a href="#Day3-–三峡人家" class="headerlink" title="Day3 –三峡人家"></a>Day3 –三峡人家</h2><p>第三天我们去了宜昌非常有名的三峡人家风景区，三峡人家位于长江夷陵峡上游，去的时候需要坐摆渡船，逆流而上。</p>
+<img src="/2021/06/05/yichang/sanxiarenjia-1.jpeg" class="" title="去景区的船上，阴雨绵绵">
+<img src="/2021/06/05/yichang/sanxiarenjia-2.jpeg" class="" title="景区码头">
+<p>此情此景让我想到一首诗句<br>两岸猿声啼不住 轻舟已过万重山</p>
+<img src="/2021/06/05/yichang/sanxiarenjia-3.jpeg" class="" title="一叶扁舟">
+
+<p>进入景区内部，天气阴转晴，风景拍出来也更加美丽</p>
+<img src="/2021/06/05/yichang/sanxiarenjia4.jpeg" class="" title="三峡人家">
 <img src="/2021/06/05/yichang/yichang-1.jpeg" class="" title="三峡人家">
-<span id="more"></span>
-
 <img src="/2021/06/05/yichang/yichang-2.jpeg" class="" title="三峡人家">
-
 <img src="/2021/06/05/yichang/yichang-3.jpeg" class="" title="三峡人家">
+<p>游记的最后，用一个小短片总结一下吧~期待我们的下次旅行</p>
+
+<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
+<iframe src="//player.bilibili.com/player.html?aid=592908430&bvid=BV1pq4y127BX&cid=479280797&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" ></iframe></div>
+
                 
             </div>
             <hr/>
@@ -538,6 +662,100 @@
 
 <script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
 
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
 
     
 
