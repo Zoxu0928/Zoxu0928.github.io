@@ -4,8 +4,8 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="网络相关知识点整理, 生活,旅行,成长">
-    <meta name="description" content="网络相关知识点整理">
+    <meta name="keywords" content="网络知识学习笔记, 生活,旅行,成长">
+    <meta name="description" content="学习网络相关知识点的时候做的一些笔记">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="renderer" content="webkit|ie-stand|ie-comp">
@@ -17,7 +17,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>网络相关知识点整理 | ZoXu❤ZoSai</title>
+    <title>网络知识学习笔记 | ZoXu❤ZoSai</title>
     <link rel="icon" type="image/png" href="/smallpig.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.min.css">
@@ -268,12 +268,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/12.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/22.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">网络相关知识点整理</h1>
+                    <h1 class="description center-align post-title">网络知识学习笔记</h1>
                 </div>
             </div>
         </div>
@@ -437,7 +437,115 @@
             <div id="articleContent">
                 <h1 id="一、认识HTTP"><a href="#一、认识HTTP" class="headerlink" title="一、认识HTTP"></a>一、认识HTTP</h1><p>超文本传输协议（Hypertext Transfer Protocol)，可以进行文字分割：超文本（Hypertext），传输（Transfer），协议（Protocol），关系如下：</p>
 <h2 id="什么是超文本"><a href="#什么是超文本" class="headerlink" title="什么是超文本"></a>什么是超文本</h2><p>在互联网早期的时候，我们输入的信息只能保存在本地，无法和其他电脑进行交互。我们保存的信息通常都以<code>文本</code>即简单字符的形式存在，文本是一种能够被计算机解析的有意义的二进制数据包。而随着互联网的高速发展，两台电脑之间能够进行数据的传输后，人们不满足只能在两台电脑之间传输文字，还想要传输图片、音频、视频，甚至点击文字或图片能够进行<code>超链接</code>的跳转，那么文本的语义就被扩大了，这种语义扩大后的文本就被称为<code>超文本(Hypertext)</code>。</p>
+<img src="/2021/07/07/http-note/1.png" class="">
 
+<h2 id="什么是传输"><a href="#什么是传输" class="headerlink" title="什么是传输"></a>什么是传输</h2><p>那么我们上面说到，两台计算机之间会形成互联关系进行通信，我们存储的超文本会被解析成为二进制数据包，由传输载体（例如同轴电缆，电话线，光缆）负责把二进制数据包由计算机终端传输到另一个终端的过程称为<code>传输(transfer)</code>。</p>
+<h2 id="什么是协议"><a href="#什么是协议" class="headerlink" title="什么是协议"></a>什么是协议</h2><p>网络协议就是网络中(包括互联网)传递、管理信息的一些规范。如同人与人之间相互交流是需要遵循一定的规矩一样，计算机之间的相互通信需要共同遵守一定的规则，这些规则就称为网络协议。</p>
+<p> <strong>HTTP 是一个在计算机世界里专门在两点之间传输文字、图片、音频、视频等超文本数据的约定和规范</strong></p>
+<h1 id="二、网络模型"><a href="#二、网络模型" class="headerlink" title="二、网络模型"></a>二、网络模型</h1><p>网络是一个复杂的系统，不仅包括大量的应用程序、端系统、通信链路、分组交换机等，还有各种各样的协议组成，那么现在我们就来聊一下网络中的协议层次。<br>为了给网络协议的设计提供一个结构，网络设计者以<strong>分层</strong>(layer)的方式组织协议，每个协议属于层次模型之一。<strong>每一层都是向它的上一层提供服务</strong>(service)，即所谓的服务模型(service model)。每个分层中所有的协议称为 协议栈(protocol stack)。因特网的协议栈由五个部分组成：<strong>物理层</strong>、<strong>链路层</strong>、<strong>网络层</strong>、<strong>传输层</strong>和<strong>应用层</strong>。我们采用自上而下的方法研究其原理，也就是应用层 -&gt; 物理层的方式。</p>
+<h2 id="OSI模型"><a href="#OSI模型" class="headerlink" title="OSI模型"></a>OSI模型</h2><p>ISO（国际标准化组织）提出来计算机网络应该按照7层来组织，那么7层网络协议栈与5层的区别在哪里？</p>
+<img src="/2021/07/07/http-note/2.png" class="">
+<p>OSI模型比网络模型多了表示层和会话层。<br>表示层主要包括数据压缩和数据加密以及数据描述，数据描述使得应用程序不必担心计算机内部存储格式的问题，而会话层提供了数据交换的定界和同步功能，包括建立检查点和恢复方案。</p>
+<img src="/2021/07/07/http-note/3.png" class="">
+
+<h2 id="应用层"><a href="#应用层" class="headerlink" title="应用层"></a>应用层</h2><p>应用层是网络应用程序和网络协议存放的分层，因特网的应用层包括许多协议，包括http，电子邮件传送协议SMTP、端系统文件上传协议FTP、还有域名解析的DNS协议。应用层协议分布在多个端系统上，一个端系统应用程序与另外一个端系统应用程序交换信息分组。我们把位于应用层的信息分组称为<strong>报文</strong>(message)。</p>
+<h2 id="传输层"><a href="#传输层" class="headerlink" title="传输层"></a>传输层</h2><p>传输层传输应用程序之间的报文。这一层主要有两种传输协议<strong>TCP</strong>和<strong>UDP</strong>。<br><strong>TCP:</strong> 向他的连接程序提供面向连接的服务，它能够控制并确认报文是否到达，并提供了拥塞机制来控制网络传输，因此当网络拥塞时，会抑制其传输速率。<br><strong>UDP:<strong>协议向它的应用程序提供无连接服务。它不具备可靠性的特征，没有流量控制，也没有拥塞控制。<br>我们把传输层的分组称为</strong>报文段。</strong></p>
+<h2 id="网络层"><a href="#网络层" class="headerlink" title="网络层"></a>网络层</h2><p>因特网的网络层负责将称为 <code>数据报(datagram)</code> 的网络分层从一台主机移动到另一台主机。网络层一个非常重要的协议是IP协议，所有具有网络层的因特网组件都必须运行IP协议，<strong>IP协议</strong>是一种网际协议，除了IP协议外，网络层还包括一些其他网际协议和路由选择协议，一般把网络层就称为IP层，由此可知IP协议的重要性。</p>
+<h2 id="链路层"><a href="#链路层" class="headerlink" title="链路层"></a>链路层</h2><p>现在我们有应用程序通信的协议，有了给应用程序提供运输的协议，还有了用于约定发送位置的IP协议，那么如何才能真正的发送数据呢？为了将分组从一个节点（主机或路由器）运输到另一个节点，网络层必须依靠链路层提供服务。链路层的例子包括以太网、wifi和电缆接入的DOCSIS协议，因为数据从源目的地传送通常需要经过几条链路，一个数据包可能被沿途不同的链路层协议处理，我们把链路层的分组成为帧（frame)</p>
+<h2 id="物理层"><a href="#物理层" class="headerlink" title="物理层"></a>物理层</h2><p>虽然链路层的作用是将帧从一个端系统运输到另一个端系统，而物理层的作用是将帧中的一个个 <code>比特</code> 从一个节点运输到另一个节点，物理层的协议仍然使用链路层协议，这些协议与实际的物理传输介质有关，例如，以太网有很多物理层协议：关于双绞铜线、关于同轴电缆、关于光纤等等。</p>
+<h1 id="三、与HTTP相关的协议"><a href="#三、与HTTP相关的协议" class="headerlink" title="三、与HTTP相关的协议"></a>三、与HTTP相关的协议</h1><p>在互联网中，任何协议都不会单独的完成信息交换，虽然http协议属于应用层协议，但是它仍需要其他层次协议的配合来完成信息的交换。</p>
+<h2 id="TCP-IP协议"><a href="#TCP-IP协议" class="headerlink" title="TCP/IP协议"></a>TCP/IP协议</h2><p>TCP/IP 我们一般称之为协议簇， TCP/IP 协议簇中不仅仅只有 TCP 协议和 IP 协议，它是一系列网络通信协议的统称。而其中最核心的两个协议就是 TCP / IP 协议。<br>TCP协议的全程是<strong>传输控制协议</strong>，HTTP使用TCP作为通信协议，因为TCP是一种可靠的协议，能保证数据不丢失。<br>IP协议主要解决通信双方寻址问题。IP协议使用IP地址来标识互联网上的每一台计算机。</p>
+<h2 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h2><p>DNS的全称是域名系统。将域名和IP地址相互映射的一个分布式数据库。</p>
+<h2 id="URI-URL"><a href="#URI-URL" class="headerlink" title="URI/URL"></a>URI/URL</h2><p>URI的全称是<strong>统一资源标识符，</strong>能够唯一的标记互联网上的资源。<br>URL的全称是<strong>统一资源定位符</strong>，也就是我们俗称的网址，实际上是URI的一个子集。**</p>
+<h1 id="四、HTTP请求响应过程（重点理解）"><a href="#四、HTTP请求响应过程（重点理解）" class="headerlink" title="四、HTTP请求响应过程（重点理解）"></a>四、HTTP请求响应过程（重点理解）</h1><h2 id="1-DNS解析、发起TCP连接"><a href="#1-DNS解析、发起TCP连接" class="headerlink" title="1.DNS解析、发起TCP连接"></a>1.DNS解析、发起TCP连接</h2><p>DNS服务器会根据域名的映射，找到域名所在的地址，然后HTTP客户端进程在80端口发起一个到域名所在服务器的TCP连接。</p>
+<h2 id="2-HTTP客户端发送HTTP请求报文"><a href="#2-HTTP客户端发送HTTP请求报文" class="headerlink" title="2.HTTP客户端发送HTTP请求报文"></a>2.HTTP客户端发送HTTP请求报文</h2><p>HTTP客户端向服务器发送HTTP请求报文。</p>
+<h2 id="3-HTTP客户端接收报文、解析，并封装到HTTP响应报文"><a href="#3-HTTP客户端接收报文、解析，并封装到HTTP响应报文" class="headerlink" title="3.HTTP客户端接收报文、解析，并封装到HTTP响应报文"></a>3.HTTP客户端接收报文、解析，并封装到HTTP响应报文</h2><p>HTTP接收报文，解析报文，从存储中检索资源对象，检索出来的对象进行封装到响应报文中，然后向客户端发送。</p>
+<h2 id="4-HTTP服务器通知TCP断开连接"><a href="#4-HTTP服务器通知TCP断开连接" class="headerlink" title="4.HTTP服务器通知TCP断开连接"></a>4.HTTP服务器通知TCP断开连接</h2><p>实际是需要等到客户端接受完响应报文后才会断开</p>
+<h2 id="5-提取报文并检查其中内部对象"><a href="#5-提取报文并检查其中内部对象" class="headerlink" title="5.提取报文并检查其中内部对象"></a>5.提取报文并检查其中内部对象</h2><p>HTTP 客户端接受完响应报文后，TCP 连接会关闭。HTTP 客户端从响应中提取出报文中是一个 HTML 响应文件，并检查该 HTML 文件，然后循环检查报文中其他内部对象。</p>
+<h2 id="6-通过显示器呈现给用户"><a href="#6-通过显示器呈现给用户" class="headerlink" title="6.通过显示器呈现给用户"></a>6.通过显示器呈现给用户</h2><p>检查完成后，HTTP 客户端会把对应的资源通过显示器呈现给用户。</p>
+<h1 id="五、HTTP1-0、HTTP1-1、HTTP2-0的区别（面试可能会问）"><a href="#五、HTTP1-0、HTTP1-1、HTTP2-0的区别（面试可能会问）" class="headerlink" title="五、HTTP1.0、HTTP1.1、HTTP2.0的区别（面试可能会问）"></a>五、HTTP1.0、HTTP1.1、HTTP2.0的区别（面试可能会问）</h1><h2 id="1-HTTP协议基本优化"><a href="#1-HTTP协议基本优化" class="headerlink" title="1.HTTP协议基本优化"></a>1.HTTP协议基本优化</h2><p>影响一个HTTP网络请求的因素主要是两个方面：<strong>带宽</strong>和<strong>延迟</strong><br>带宽在目前来看，我国的网络基础建设已经使得带宽得到极大的提升，所以这个方面我们可以暂且不考虑。<br><strong>延迟</strong>：<br>1）<strong>浏览器阻塞</strong>：浏览器会因为一些原因阻塞请求。浏览器对于同一个域名，同时只能有4个连接，超过浏览器最大连接数限制，后续请求会被阻塞<br>2）<strong>DNS查询</strong>：通过DNS协议去对域名解析来获取ip地址，如果获取较慢，也会造成延迟。通常可以利用DNS缓存结果来达到减少时间的目的<br>3）<strong>建立连接：</strong>HTTP是基于TCO协议的，浏览器最快也要在第三次握手的时候才能捎带HTTP请求报文，达到真正的建立连接，但是这些连接无法复用会导致每次请求都经历三次握手和慢启动，三次握手在高延迟的场景下影响较明显。</p>
+<h2 id="2-HTTP1-0和HTTP1-1的区别"><a href="#2-HTTP1-0和HTTP1-1的区别" class="headerlink" title="2.HTTP1.0和HTTP1.1的区别"></a>2.HTTP1.0和HTTP1.1的区别</h2><p>HTTP1.1是当前使用最为广泛的HTTP协议。主要区别：<br>1）<strong>缓存处理</strong>：HTTP1.1在header中引入了更多的缓存控制策略。（IF-Match、IF-None-Match等）<br>2）<strong>带宽优化</strong>及网络连接的使用：<strong>HTTP1.0</strong>中存在<strong>带宽浪费</strong>的现象，例如Client端只需要某个对象的一部分吗，但是Server把整个对象传输过来，且<strong>不支持断点续传</strong>。<strong>HTTP1.1</strong>在header中引入了range头域，允许只请求资源的某个部分。<br>3）<strong>错误通知</strong>的管理：在HTTP1.1中新增了24个错误状态响应码。如409冲突<br>4）<strong>Host头处理</strong>：HTTP1.0中认定每台server都绑定一个唯一的ip地址，因此请求的URL中没有传递主机名。但随着虚拟机技术的发展，一台服务器上可能存在多个vm,且共享一个IP，HTTP1.1的请求消息和响应消息都支持Host头域<br>5）<strong>长连接</strong>：HTTP1.1中支持长连接，在一个TCP连接上可以传送多个HTTP请求和响应，减少了建立和关闭连接的消耗。在HTTP1.1中默认开启connection:keep-alive。</p>
+<h2 id="3-HTTP-2-0"><a href="#3-HTTP-2-0" class="headerlink" title="3.HTTP 2.0"></a>3.HTTP 2.0</h2><p>HTTP2.0可以说是SPDY的升级版<br>1）<strong>多路复用</strong>（multiplexing）：多个请求共享一个tcp连接的方式，解决了浏览器请求数量限制的问题。<br>2）<strong>请求优先级：</strong>多路复用可能带来一个问题是，在连接共享的基础之上有可能关键请求会被阻塞，HTTP2.0允许给每个请求设置优先级。<br>3）<strong>header压缩</strong><br>4）<strong>服务端推送</strong>：会将css文件或js文件推送给client，当client再次尝试获取静态文件时，可以直接从缓存中获取，不用再发请求了。<br>5)  <strong>支持明文HTTP传输</strong></p>
+<h1 id="六、什么是HTTPS"><a href="#六、什么是HTTPS" class="headerlink" title="六、什么是HTTPS"></a>六、什么是HTTPS</h1><p>HTTP一般是明文传输，很容易被攻击者剽窃重要信息。HTTPS应运而生。<br>HTTPS是以安全为目标的HTTP通道，在HTTP的基础上通过传输加密和身份认证保证传输过程的安全性。<br>HTTPS在HTTP的基础上增加了SSL层。<br><strong>HTTPS=HTTP+SSL</strong><br>**</p>
+<h2 id="深入理解HTTPS工作原理"><a href="#深入理解HTTPS工作原理" class="headerlink" title="深入理解HTTPS工作原理"></a>深入理解HTTPS工作原理</h2><h3 id="1-为什么需要HTTPS？"><a href="#1-为什么需要HTTPS？" class="headerlink" title="1.为什么需要HTTPS？"></a>1.为什么需要HTTPS？</h3><p>HTTP协议存在的问题：<br>1）通信使用铭文，内容可能被窃听<br>2）无法证明报文的完整性，所以可能遭篡改<br>3）不验证通信方的身份，因此有可能遭遇伪装<br>HTTPS协议的优势：<br>1）数据隐私性：内容经过对称加密，每个连接生成一个唯一的加密密钥<br>2）数据完整性：内容传输经过完整性校验<br>3）身份认证：第三方无法伪造服务端（客户端）身份</p>
+<h3 id="2-HTTPS如何解决HTTP的问题？"><a href="#2-HTTPS如何解决HTTP的问题？" class="headerlink" title="2.HTTPS如何解决HTTP的问题？"></a>2.HTTPS如何解决HTTP的问题？</h3><p>HTTPS并非是应用层的一种新协议，只是HTTP部分通信接口用SSL和TLS协议代替而已。</p>
+<img src="/2021/07/07/http-note/4.png" class="">
+<p>HTTPS协议的主要功能基本都依赖于TLS/SSL协议，TLS/SSL的功能实现主要依赖于三类基本算法：<strong>散列函数</strong>、<strong>对称加密</strong>和<strong>非对称加密。</strong><br><strong>非对称加密—实现身份认真和密钥协商</strong><br><strong>对称加密—采用协商的密钥对数据加密</strong><br><strong>散列函数—验证信息的完整性</strong></p>
+<img src="/2021/07/07/http-note/5.png" class="">
+
+<h3 id="3-HTTPS的工作流程-重点"><a href="#3-HTTPS的工作流程-重点" class="headerlink" title="3.HTTPS的工作流程(重点)"></a>3.HTTPS的工作流程(重点)</h3><img src="/2021/07/07/http-note/6.png" class="">
+<p>1.client发起一个HTTPS的请求，根据规定，Client需要连接Server的443端口<br>2.Server把事先配置好的公钥证书（public key certificate）返回给客户端<br>3.Client验证公钥证书：比如是否在有效期内、证书用途是否匹配、它的上一级证书是否有效等，这是一个递归的过程，直到验证到根证书。如果验证通过则继续，否则显示告警信息。<br>4.Client使用伪随机数生成器生成加密所使用的对称密钥，然后用证书的公钥加密这个对称密钥，发给Server<br>5.Server使用自己的私钥（private key）解密这个消息，得到对称密钥。至此，Client和Server双方都持有了相同的对称密钥<br>6.Server使用对称密钥加密明文内容，发给Client<br>7.Client使用对称密钥解密响应的密文，得到明文内容A</p>
+<h3 id="4-HTTP和HTTPS的区别"><a href="#4-HTTP和HTTPS的区别" class="headerlink" title="4.HTTP和HTTPS的区别"></a>4.HTTP和HTTPS的区别</h3><p>HTTPS基于<strong>传输层</strong>，HTTP基于应用层<br>HTTPS需要用到SSL证书，HTTP不用<br>HTTPS比HTTP更加安全，对搜索引擎更加友好</p>
+<h1 id="七、TCP协议"><a href="#七、TCP协议" class="headerlink" title="七、TCP协议"></a>七、TCP协议</h1><p>TCP协议是一个<strong>面向连接的</strong>、<strong>可靠的</strong>、<strong>基于IP</strong>的<strong>传输层协议</strong>。</p>
+<h2 id="1-TCP头部结构和字段介绍"><a href="#1-TCP头部结构和字段介绍" class="headerlink" title="1.TCP头部结构和字段介绍"></a>1.TCP头部结构和字段介绍</h2><img src="/2021/07/07/http-note/7.png" class="">
+<p>从上图可见，TCP协议是封装在IP数据包中的。<br>下图是TCP报文的数据格式：</p>
+<img src="/2021/07/07/http-note/8.png" class="">
+
+<h3 id="1-1-源端口和目的端口"><a href="#1-1-源端口和目的端口" class="headerlink" title="1.1 源端口和目的端口"></a>1.1 源端口和目的端口</h3><p>各占两个字节，这两个值加上<strong>IP首部中</strong>的<strong>源端IP地址</strong>和<strong>目的端IP地址</strong>唯一确定一个TCP连接。有时一个IP地址和一个端口号也成为<strong>socket</strong>。</p>
+<h3 id="1-2-序号（seq）"><a href="#1-2-序号（seq）" class="headerlink" title="1.2 序号（seq）"></a>1.2 序号（seq）</h3><p>占<strong>4个字节</strong>，是本报文段所发送的数据项目组第一个字节的序号。在TCP传送的数据流中，每一个字节都有一个序号。<br>例如，一报文段的序号为300，而且数据共100字节，则下一个报文段的序号就是400；序号是32bit的无符号数，序号到达2^32-1后从0开始。</p>
+<h3 id="1-3-确认序号（ack）"><a href="#1-3-确认序号（ack）" class="headerlink" title="1.3 确认序号（ack）"></a>1.3 确认序号（ack）</h3><p><strong>占4字节</strong>，是期望收到对方下次发送的数据的<strong>第一个字节</strong>的<strong>序号</strong>。也就是期望收到的下一个报文段的<strong>首部</strong>中的<strong>序号</strong>；<br><strong>确认序号应该是上次已成功收到数据字节序号+1。</strong><br><strong>只有ACK标志为1时，确认序号才有效。</strong></p>
+<h3 id="1-4-数据偏移"><a href="#1-4-数据偏移" class="headerlink" title="1.4 数据偏移"></a>1.4 数据偏移</h3><p>占4比特，表示数据开始的地方离TCP段的起始处有多远。实际上就是TCP段首部的长度。由于首部长度不固定，因此数据偏移字段是必要的。数据偏移以32位为长度单位，也就是4个字节，因此<strong>TCP首部的最大长度是60个字节</strong>。即偏移<strong>最大为15个长度单位</strong>=1532位=154字节。</p>
+<h3 id="1-5-保留"><a href="#1-5-保留" class="headerlink" title="1.5 保留"></a>1.5 保留</h3><p>  6比特，供以后应用，现在置为0。</p>
+<h3 id="1-6-6个标志位比特"><a href="#1-6-6个标志位比特" class="headerlink" title="1.6 6个标志位比特"></a>1.6 6个标志位比特</h3><p>① URG：当URG=1时，注解此报文应尽快传送，而不要按本来的列队次序来传送。与“紧急指针”字段共同应用，紧急指针指出在本报文段中的紧急数据的最后一个字节的序号，使接管方可以知道紧急数据共有多长。<br>② ACK：只有当ACK=1时，确认序号字段才有效；<br>③ PSH：当PSH=1时，接收方应该尽快将本报文段立即传送给其应用层。<br>④ RST：当RST=1时，表示出现连接错误，必须释放连接，然后再重建传输连接。复位比特还用来拒绝一个不法的报文段或拒绝打开一个连接；<br>⑤ SYN：SYN=1,ACK=0时表示请求建立一个连接，携带SYN标志的TCP报文段为同步报文段；<br>⑥ FIN：发端完成发送任务。</p>
+<table>
+<thead>
+<tr>
+<th align="left">字段</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">URG</td>
+<td align="left">紧急指针是否有效。为1，表示某一位需要被优先处理</td>
+</tr>
+<tr>
+<td align="left">ACK</td>
+<td align="left">确认号是否有效，一般置为1。</td>
+</tr>
+<tr>
+<td align="left">PSH</td>
+<td align="left">提示接收端应用程序立即从TCP缓冲区把数据读走。</td>
+</tr>
+<tr>
+<td align="left">RST</td>
+<td align="left">对方要求重新建立连接，复位。</td>
+</tr>
+<tr>
+<td align="left">SYN</td>
+<td align="left">请求建立连接，并在其序列号的字段进行序列号的初始值设定。建立连接，设置为1</td>
+</tr>
+<tr>
+<td align="left">FIN</td>
+<td align="left">希望断开连接。</td>
+</tr>
+</tbody></table>
+<h3 id="1-7-窗口"><a href="#1-7-窗口" class="headerlink" title="1.7 窗口"></a>1.7 窗口</h3><p><strong>TCP通过滑动窗口的概念来进行流量控制。</strong><br>设想在发送端发送数据的速度很快而接收端接收速度却很慢的情况下，为了保证数据不丢失，显然需要进行流量控制， 协调好通信双方的工作节奏。所谓<strong>滑动窗口</strong>，可以理解成接收端所能提供的缓冲区大小。<br>TCP利用一个滑动的窗口来告诉发送端对它所发送的数据能提供多大的缓冲区。窗口大小为字节数起始于确认序号字段指明的值（这个值是接收端正期望接收的字节）。窗口大小是一个16bit字段，因而窗口大小最大为65535字节。</p>
+<h3 id="1-8-检验和"><a href="#1-8-检验和" class="headerlink" title="1.8 检验和"></a>1.8 检验和</h3><p>检验和覆盖了整个TCP报文段：TCP首部和数据。这是一个强制性的字段，一定是由发端计算和存储，并由收端进行验证。</p>
+<h3 id="1-9-紧急指针"><a href="#1-9-紧急指针" class="headerlink" title="1.9 紧急指针"></a>1.9 紧急指针</h3><p>只有当URG标志置1时紧急指针才有效。紧急指针是一个正的偏移量，和序号字段中的值相加表示紧急数据最后一个字节的序号。</p>
+<h2 id="2-TCP协议三次握手过程理解"><a href="#2-TCP协议三次握手过程理解" class="headerlink" title="2.TCP协议三次握手过程理解"></a>2.TCP协议三次握手过程理解</h2><p>首先看一个图</p>
+<img src="/2021/07/07/http-note/9.png" class="">
+<p>1）<strong>第一次握手</strong>：client发送syn包到server，并进入SYN_SENT状态，等待server确认；<br>2）<strong>第二次握手</strong>：server收到syn包，向client确认SYN，同时也发送一个SYN包，即SYN+ACK，此时服务器进入<strong>SYN_RECV</strong>状态<br>3）<strong>第三次握手</strong>：客户端收到SYN+ACK包，并向server端发送确认包ACK(ack=y+1)，此包发送完毕，client和server进入<strong>ESTABLISHED</strong>(TCP连接成功)状态。</p>
+<h2 id="3-TCP协议四次挥手过程理解"><a href="#3-TCP协议四次挥手过程理解" class="headerlink" title="3.TCP协议四次挥手过程理解"></a>3.TCP协议四次挥手过程理解</h2><img src="/2021/07/07/http-note/10.png" class="">
+
+<p>1）客户端进程发出连接释放报文，并且停止发送数据。释放数据报文首部，FIN=1，其序列号为seq=u（等于前面已经传送过来的数据的最后一个字节的序号加1），此时，客户端进入<strong>FIN-WAIT-1</strong>（终止等待1）状态。 TCP规定，FIN报文段即使不携带数据，也要消耗一个序号。<br>2）服务器收到连接释放报文，发出确认报文，ACK=1，ack=u+1，并且带上自己的序列号seq=v，此时，服务端就进入了<strong>CLOSE-WAIT</strong>（关闭等待）状态。TCP服务器通知高层的应用进程，客户端向服务器的方向就释放了，这时候处于半关闭状态，即客户端已经没有数据要发送了，但是服务器若发送数据，客户端依然要接受。这个状态还要持续一段时间，也就是整个CLOSE-WAIT状态持续的时间。<br>3）客户端收到服务器的确认请求后，此时，客户端就进入FIN-WAIT-2（终止等待2）状态，等待服务器发送连接释放报文（在这之前还需要接受服务器发送的最后的数据）。<br>4）服务器将最后的数据发送完毕后，就向客户端发送连接释放报文，FIN=1，ack=u+1，由于在半关闭状态，服务器很可能又发送了一些数据，假定此时的序列号为seq=w，此时，服务器就进入了<strong>LAST-ACK</strong>（最后确认）状态，等待客户端的确认。<br>5）客户端收到服务器的连接释放报文后，必须发出确认，ACK=1，ack=w+1，而自己的序列号是seq=u+1，此时，客户端就进入了<strong>TIME-WAIT</strong>（时间等待）状态。<strong>注意此时TCP连接还没有释放</strong>，必须经过2∗∗MSL（<strong>最长报文段寿命</strong>）的时间后，当客户端撤销相应的TCB后，才进入CLOSED状态。<br>6）服务器只要收到了客户端发出的确认，立即进入CLOSED状态。同样，撤销TCB后，就结束了这次的TCP连接。可以看到，服务器结束TCP连接的时间要比客户端早一些。</p>
+<h2 id="4-常见面试题"><a href="#4-常见面试题" class="headerlink" title="4.常见面试题"></a>4.常见面试题</h2><h3 id="1-为什么连接的时候是三次握手，关闭的时候却是四次握手？"><a href="#1-为什么连接的时候是三次握手，关闭的时候却是四次握手？" class="headerlink" title="1.为什么连接的时候是三次握手，关闭的时候却是四次握手？"></a>1.为什么连接的时候是三次握手，关闭的时候却是四次握手？</h3><p>答：因为当Server端收到Client端的SYN连接请求报文后，可以直接发送SYN+ACK报文。其中ACK报文是用来应答的，SYN报文是用来同步的。但是关闭连接时，当Server端收到FIN报文时，很可能并不会立即关闭SOCKET，所以只能先回复一个ACK报文，告诉Client端，”你发的FIN报文我收到了”。只有等到我Server端所有的报文都发送完了，我才能发送FIN报文，因此不能一起发送。故需要四步握手。</p>
+<h3 id="2-为什么TIME-WAIT状态需要经过2MSL-最大报文段生存时间-才能返回到CLOSE状态？"><a href="#2-为什么TIME-WAIT状态需要经过2MSL-最大报文段生存时间-才能返回到CLOSE状态？" class="headerlink" title="2.为什么TIME_WAIT状态需要经过2MSL(最大报文段生存时间)才能返回到CLOSE状态？"></a>2.为什么TIME_WAIT状态需要经过2MSL(最大报文段生存时间)才能返回到CLOSE状态？</h3><p>答：虽然按道理，四个报文都发送完毕，我们可以直接进入CLOSE状态了，但是我们必须假象网络是不可靠的，有可以最后一个ACK丢失。所以TIME_WAIT状态就是用来重发可能丢失的ACK报文。在Client发送出最后的ACK回复，但该ACK可能丢失。Server如果没有收到ACK，将不断重复发送FIN片段。所以Client不能立即关闭，它必须确认Server接收到了该ACK。Client会在发送出ACK之后进入到TIME_WAIT状态。Client会设置一个计时器，等待2MSL的时间。如果在该时间内再次收到FIN，那么Client会重发ACK并再次等待2MSL。所谓的2MSL是两倍的MSL(Maximum Segment Lifetime)。MSL指一个片段在网络中最大的存活时间，2MSL就是一个发送和一个回复所需的最大时间。如果直到2MSL，Client都没有再次收到FIN，那么Client推断ACK已经被成功接收，则结束TCP连接。</p>
+<h3 id="3-为什么不能用两次握手进行连接？"><a href="#3-为什么不能用两次握手进行连接？" class="headerlink" title="3.为什么不能用两次握手进行连接？"></a>3.为什么不能用两次握手进行连接？</h3><p>答：3次握手完成两个重要的功能，既要双方做好发送数据的准备工作(双方都知道彼此已准备好)，也要允许双方就初始序列号进行协商，这个序列号在握手过程中被发送和确认。</p>
+<h3 id="4-如果已经建立了连接，但是客户端突然出现故障了怎么办？"><a href="#4-如果已经建立了连接，但是客户端突然出现故障了怎么办？" class="headerlink" title="4.如果已经建立了连接，但是客户端突然出现故障了怎么办？"></a>4.如果已经建立了连接，但是客户端突然出现故障了怎么办？</h3><p>答：TCP还设有一个保活计时器，显然，客户端如果出现故障，服务器不能一直等下去，白白浪费资源。服务器每收到一次客户端的请求后都会重新复位这个计时器，时间通常是设置为2小时，若两小时还没有收到客户端的任何数据，服务器就会发送一个探测报文段，以后每隔75秒钟发送一次。若一连发送10个探测报文仍然没反应，服务器就认为客户端出了故障，接着就关闭连接。</p>
+<h2 id="5-TCP流量控制（滑动窗口协议）"><a href="#5-TCP流量控制（滑动窗口协议）" class="headerlink" title="5.TCP流量控制（滑动窗口协议）"></a>5.TCP流量控制（滑动窗口协议）</h2><p>TCP流量控制主要是针对接收端的处理速度不如发送端发送速度快的问题，消除发送方使接收方缓存溢出的可能性。<br>TCP流量控制主要使用滑动窗口协议，<strong>滑动窗口是client端使用的窗口大小，用来告诉server端client的缓存大小，以此可以控制发送端发送数据的大小，从而达到流量控制的目的</strong>。<br>这个窗口大小就是我们一次传输几个数据。对所有数据帧按顺序赋予编号，发送方在发送过程中始终保持着一个发送窗口，只有落在发送窗口内的帧才允许被发送；<br>同时接收方也维持着一个接收窗口，只有落在接收窗口内的帧才允许接收。这样通过调整发送方窗口和接收方窗口的大小可以实现流量控制。<br>我们可以通过下图来分析:</p>
+<img src="/2021/07/07/http-note/11.png" class="">
+
+<p>1)发送方接收到了报文 ack=33,win=10，由报文可知，对方收到了33号前的数据，现在期望接收[33,43)号数据。那我们开始发送[33,43)。<br>2）[33, 43) 号的数据你是已经发送了,但接受方并没有接受到[36,37]数据。所以接收方发送回对报文段 A 的确认：ack = 35, win = 10。<br>3）发送方收到了 ack = 35, win = 10，对方期望接收 [35, 45) 号数据。那么发送方在发送[35, 45) 。<br>这里面需要思考一个问题？<br>     第一步发送了[33, 43),如果这次发送[35, 45),那中间重叠部分不是发送了两次,所以这里要思考: 是全部重新发送还是只发送接收端没有收到的数据，如果全部发送，那么重复发送的数据接收端怎么处理。这个下面快速重传会讲。<br>4）接收方接收到了报文段 [35, 41)，接收方发送：ack = 41, win = 10. （这是一个累积确认）<br>5、发送方收到了 ack = 41, win = 10，对方期望接收 [41, 51) 号数据。<br>6、…….<br> 这样一直传输数据,直到数据发送完成。这么一来就保证数据数据的可靠性,因为如果某数据没有获取到,那么ack永远不会跳过它。</p>
+<h2 id="6-TCP拥塞控制"><a href="#6-TCP拥塞控制" class="headerlink" title="6.TCP拥塞控制"></a>6.TCP拥塞控制</h2><h3 id="1-什么是拥塞控制？"><a href="#1-什么是拥塞控制？" class="headerlink" title="1.什么是拥塞控制？"></a>1.什么是拥塞控制？</h3><p>     <strong>流量控制</strong>是通过<strong>接收方</strong>来控制流量的一种方式；而<strong>拥塞控制</strong>则是通过<strong>发送方</strong>来控制流量的一种方式。<br>TCP发送方可能因为IP网络的拥塞而被遏制，TCP拥塞控制就是为了解决这个问题（注意和TCP流量控制的区别）。<br>TCP拥塞控制的几种方法：<br>1）<strong>慢启动</strong><br>2）<strong>拥塞避免</strong><br>3）<strong>快重传</strong><br>4）<strong>快恢复</strong></p>
+<h3 id="2-什么是拥塞窗口？"><a href="#2-什么是拥塞窗口？" class="headerlink" title="2.什么是拥塞窗口？"></a>2.什么是拥塞窗口？</h3><p>拥塞窗口：发送方维持一个叫做拥塞窗口cwnd的状态变量。拥塞窗口的大小取决于网络的拥塞程度，并且动态变化。<br>说明: <strong>发送方取拥塞窗口与滑动窗口的最小值作为发送的上限。</strong><br>发送方控制拥塞窗口的原则是：只要网络没有出现拥塞，拥塞窗口就增大一些，以便把更多的分组发送出去。但只要网络出现拥塞，拥塞窗口就减小一些，以减少<br>注入到网络中的分组数。</p>
+<h3 id="3-慢启动"><a href="#3-慢启动" class="headerlink" title="3.慢启动"></a>3.慢启动</h3><p>TCP在连接过程的三次握手完成后，开始传送数据，并不是一开始向网络通道中发送大量的数据包。因为假如网络出现问题，很多这样的大包会积攒在路由器上，很容易导致网络中路由器缓存空间耗尽，从而发生拥塞。<br>因此，TCP协议规定，新建立的连接不能一开始就发送大尺寸的数据包。只能从小尺寸的包开始发送。在发送和数据被对方确认的过程中去计算对方的接受速度，来逐步增加每次发送的数据量（<strong>最后达到一个稳定的值，进入告诉传输阶段。相应的，慢启动过程中，TCP通道处在低速传输的阶段</strong>）<br>以上就是慢启动策略。用一个简单的原理图来描述一下：</p>
+<img src="/2021/07/07/http-note/12.png" class="">
+<p><strong>拓展：慢启动带来的性能问题如何解决？</strong><br>在迁移海量小文件的需求下，我们不能使用“对每个文件都采用独立的TCP连接来传输（循环使用scp拷贝）“这样的策略，它会使每个文件的传输都处于在一个独立TCP的慢启动。<br>解决方法很简单：<strong>尽量把大量小文件放在一个TCP连接中排队传输</strong>。起初的一两个文件处于慢启动过程传输，后续的文件传输全部处于高速通道中传输，用这样的方式来减少发包的数目，进而降低时间消耗。同样，实际上这种传输策略带来的性能提升的功劳不仅仅归于避免慢启动，<strong>事实上也避免了大量的3次握手和四次握手</strong>，这个对海量小文件传输的性能消耗也非常致命。</p>
+<h3 id="4-拥塞避免"><a href="#4-拥塞避免" class="headerlink" title="4.拥塞避免"></a>4.拥塞避免</h3><p>慢启动中拥塞窗口的cwnd值,开始是1,接下开是指数型增涨的。1、2、4、8、16…..这样涨太快了吧。那么就有了堵塞避免。<br>cwnd不能一直这样无限增长下去，一定需要某个限制。TCP使用了一个叫<strong>慢启动门限(ssthresh)<strong>的变量，一旦</strong>cwnd&gt;=ssthresh</strong>（大多数TCP的实现，通常大小都是（65536），慢启动过程结束，拥塞避免阶段开始；<br>拥塞避免：cwnd的值不再指数级往上升，开始加法增加。此时当窗口中所有的报文段都被确认时，cwnd的大小加1，cwnd的值就随着RTT开始线性增加，这样就可以避免增长过快导致网络拥塞，慢慢的增加调整到网络的最佳值。(它逻辑很简单就是到一定值后,cwnd不在是指数增长,而是+1增长。这样显然慢多了）。<br>非ECN环境下的拥塞判断，发送方RTO超时，重传了一个报文段，它的逻辑如下：<br>      1）把ssthresh降低为cwnd值的一半。<br>      2）把cwnd重新设置为1。<br>      3）重新进入慢启动过程。</p>
+<img src="/2021/07/07/http-note/13.png" class="">
+
+<h3 id="5-快速重传"><a href="#5-快速重传" class="headerlink" title="5.快速重传"></a>5.快速重传</h3><p><strong>TCP要保证所有的数据包都可以到达，所以，必需要有重传机制。</strong><br>接收端给发送端的Ack确认只会确认最后一个连续的包，比如，发送端发了1,2,3,4,5一共五份数据，接收端收到了1，2，于是回ack 3，然后收到了4（注意此时3没收到）<br>此时的TCP会怎么办？我们要知道，因为正如前面所说的，SeqNum和Ack是以字节数为单位，所以ack的时候，不能跳着确认，只能确认最大的连续收到的包，不然，发送端就以为之前的都收到了。<br>1）<strong>超时重传机制</strong><br>一种是不回ack，死等3，当发送方发现收不到3的ack超时后，会重传3。一旦接收方收到3后，会ack 回 4——意味着3和4都收到了。<br>但是，这种方式会有比较严重的问题，那就是因为要死等3，所以会导致4和5即便已经收到了，而发送方也完全不知道发生了什么事，因为没有收到Ack，所以，发送方可能会悲观地认为也丢了，所以有可能也会导致4和5的重传。<br>对此有两种选择：<br>① 一种是仅重传timeout的包。也就是第3份数据。<br>② 另一种是重传timeout后所有的数据，也就是第3，4，5这三份数据。<br>这两种方式有好也有不好。第一种会节省带宽，但是慢，第二种会快一点，但是会浪费带宽，也可能会有无用功。但总体来说都不好。因为都在等timeout，timeout可能会很长。<br>2）<strong>快速重传机制</strong><br>于是，TCP引入了一种叫<strong>Fast Retransmit</strong>的算法，不以时间驱动，而以数据驱动重传。也就是说，如果，包没有连续到达，就ack最后那个可能被丢了的包，如果发送方连续收到3次相同的ack，就重传。Fast Retransmit的好处是不用等timeout了再重传,而是只是三次相同的ack就重传。<br>比如：如果发送方发出了1，2，3，4，5份数据，第一份先到送了，于是就ack回2，结果2因为某些原因没收到，3到达了，于是还是ack回2，后面的4和5都到了，但是还是ack回2因为2还是没有收到，于是发送端收到了三个ack=2的确认，知道了2还没有到，于是就马上重转2。然后，接收端收到了2，此时因为3，4，5都收到了，于是ack回6。</p>
+<img src="/2021/07/07/http-note/14.png" class="">
                 
             </div>
             <hr/>
@@ -642,7 +750,7 @@
             contentSelector: '#articleContent',
             headingsOffset: -($(window).height() * 0.4 - 45),
             collapseDepth: Number('0'),
-            headingSelector: 'h2, h3, h4'
+            headingSelector: 'h1, h2, h3, h4'
         });
 
         // modify the toc link href to support Chinese.
@@ -654,7 +762,7 @@
 
         // modify the heading title id to support Chinese.
         i = 0;
-        $('#articleContent').children('h2, h3, h4').each(function () {
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
             $(this).attr('id', tocHeading + (++i));
         });
 

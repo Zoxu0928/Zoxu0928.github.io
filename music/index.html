@@ -426,7 +426,7 @@
         <div class="card-content article-card-content">
             <div id="articleContent">
                 
-    <div id="aplayer-TopMHzJy" class="aplayer aplayer-tag-marker meting-tag-marker"
+    <div id="aplayer-dTWKWlWG" class="aplayer aplayer-tag-marker meting-tag-marker"
          data-id="523845661" data-server="netease" data-type="playlist" data-mode="circulation" data-autoplay="false" data-mutex="true" data-listmaxheight="340px" data-preload="auto" data-theme="#FF4081"
     ></div>
 
@@ -615,7 +615,7 @@
             contentSelector: '#articleContent',
             headingsOffset: -($(window).height() * 0.4 - 45),
             collapseDepth: Number('0'),
-            headingSelector: 'h2, h3, h4'
+            headingSelector: 'h1, h2, h3, h4'
         });
 
         // modify the toc link href to support Chinese.
@@ -627,7 +627,7 @@
 
         // modify the heading title id to support Chinese.
         i = 0;
-        $('#articleContent').children('h2, h3, h4').each(function () {
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
             $(this).attr('id', tocHeading + (++i));
         });
 
