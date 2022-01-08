@@ -421,4 +421,155 @@
         <tag>旅行</tag>
       </tags>
   </entry>
+  <entry>
+    <title>数据结构学习笔记-线性结构</title>
+    <url>/2021/06/05/DataStructureNote/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>&emsp;&emsp;过完年后，技术栈逐渐由java转为了go语言，面对一个新的语言，希望能从数据结构和一些算法题入手从而加深掌握的程度，在此推荐一下这位大神的总结,个人感觉写的非常好</p>
+<blockquote>
+<p><a href="https://goa.lenggirl.com/#/">https://goa.lenggirl.com/#/</a></p>
+</blockquote>
+<img src="/2021/06/05/DataStructureNote/1.png" class="">
+
+<h1 id="一-线性表的定义"><a href="#一-线性表的定义" class="headerlink" title="一.线性表的定义"></a>一.线性表的定义</h1><p>线性表是一种用来存储数据的线性结构。<br>定义：线性表是n（n&gt;=0）个数据特性相同的元素组成的有限序列。<br>注意：线性表内的数据元素类型是相同的</p>
+<h1 id="二-线性表的特点"><a href="#二-线性表的特点" class="headerlink" title="二.线性表的特点"></a>二.线性表的特点</h1><blockquote>
+<p>1．“有限”——说明有头有尾 专业术语为：存在唯一一个被称为“第一个”的数据元素，存在唯一一个被称为“最后一个”的数据元素<br>2.“序列“——在此我简单的将它理解为站好队，因此也就有前后的问题 专业术语为：除第一个元素外，每个元素都有唯一的一个”直接前驱“。除最后一个元素外，每一个元素都有唯一的”直接后继“（说的就是麻烦哈，其实就是前面有人和后面有人呗）</p>
+</blockquote>
+<h1 id="三-线性表的存储方式（重要）"><a href="#三-线性表的存储方式（重要）" class="headerlink" title="三.线性表的存储方式（重要）"></a>三.线性表的存储方式（重要）</h1><h2 id="1-链式存储结构（链表）（划重点）"><a href="#1-链式存储结构（链表）（划重点）" class="headerlink" title="1.链式存储结构（链表）（划重点）"></a>1.链式存储结构（链表）（划重点）</h2><p>定义：</p>
+<blockquote>
+<p>链表由一个个数据节点组成的，它是一个递归结构，要么是空的，要么存在一个指向另外一个数据节点的引用<br>链表可以说是最基础的数据结构。</p>
+</blockquote>
+<p>最简单的链表代码如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+<span class="token keyword">import</span><span class="token punctuation">(</span>
+  <span class="token string">"fmt"</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">type</span> LinkNode <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Data     <span class="token builtin">int64</span>
+    NextNode <span class="token operator">*</span>LinkNode
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 新的节点</span>
+    node <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>LinkNode<span class="token punctuation">)</span>
+    node<span class="token punctuation">.</span>Data <span class="token operator">=</span> <span class="token number">2</span>
+
+    <span class="token comment">// 新的节点</span>
+    node1 <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>LinkNode<span class="token punctuation">)</span>
+    node1<span class="token punctuation">.</span>Data <span class="token operator">=</span> <span class="token number">3</span>
+    node<span class="token punctuation">.</span>NextNode <span class="token operator">=</span> node1 <span class="token comment">// node1 链接到 node 节点上</span>
+
+    <span class="token comment">// 新的节点</span>
+    node2 <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>LinkNode<span class="token punctuation">)</span>
+    node2<span class="token punctuation">.</span>Data <span class="token operator">=</span> <span class="token number">4</span>
+    node1<span class="token punctuation">.</span>NextNode <span class="token operator">=</span> node2 <span class="token comment">// node2 链接到 node1 节点上</span>
+
+    <span class="token comment">// 按顺序打印数据</span>
+    nowNode <span class="token operator">:=</span> node
+    <span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> nowNode <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// 打印节点值</span>
+            fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>nowNode<span class="token punctuation">.</span>Data<span class="token punctuation">)</span>
+            <span class="token comment">// 获取下一个节点</span>
+            nowNode <span class="token operator">=</span> nowNode<span class="token punctuation">.</span>NextNode
+            <span class="token keyword">continue</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token comment">// 如果下一个节点为空，表示链表结束了</span>
+        <span class="token keyword">break</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>打印出<br>2<br>3<br>4</p>
+<p>结构体 <code>LinkNode</code> 有两个字段，一个字段存放数据 <code>Data</code>，另一个字典指向下一个节点 <code>NextNode</code> 。这种从一个数据节点指向下一个数据节点的结构，都可以叫做链表。</p>
+<h3 id="1-1-链表的分类"><a href="#1-1-链表的分类" class="headerlink" title="1.1 链表的分类"></a>1.1 链表的分类</h3><p>  <strong>单向链表</strong>:<br>    &emsp;&emsp;单向链表的每一个节点包含两部分，一部分存放数据的变量data，另一部分是指向下一个节点的指针next。<br>  <strong>双向链表</strong>:<br>    &emsp;&emsp;每个节点除了拥有data和next指针，还拥有指向前置节点的prev指针<br>  <strong>循环链表</strong>:<br>    &emsp;&emsp;循环链表，就是它一直往下找数据节点，最后回到了自己那个节点，形成了一个回路。循环单链表和循环双链表的区别就是，一个只能一个方向走，一个两个方向都可以走。<br>    我们来实现一个循环链表<code>Ring</code>,参考Golang标准库 <code>container/ring</code></p>
+<blockquote>
+<p>这本书中有各个Go语言标准包解析<br><a href="https://syaning.github.io/go-pkgs/">https://syaning.github.io/go-pkgs/</a></p>
+</blockquote>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">    <span class="token comment">// 循环链表</span>
+<span class="token keyword">type</span> Ring <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    next<span class="token punctuation">,</span> prev <span class="token operator">*</span>Ring       <span class="token comment">// 前驱和后驱节点</span>
+    Value      <span class="token keyword">interface</span><span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span> <span class="token comment">// 数据</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>该循环链表有一个三个字段，<code>next</code> 表示后驱节点，<code>prev</code> 表示前驱节点，<code>Value</code>表示值。<br>我们来分析该结构各操作的时间复杂度。</p>
+<h3 id="1-2-链表的基础操作"><a href="#1-2-链表的基础操作" class="headerlink" title="1.2 链表的基础操作"></a>1.2 链表的基础操作</h3><h4 id="初始化循环链表"><a href="#初始化循环链表" class="headerlink" title="初始化循环链表"></a><strong>初始化循环链表</strong></h4><p>  &emsp;&emsp;初始化一个空的循环链表<br>  <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment">// 初始化空的循环链表，前驱和后驱都指向自己，因为是循环的</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>Ring<span class="token punctuation">)</span> <span class="token function">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Ring <span class="token punctuation">&#123;</span>
+    r<span class="token punctuation">.</span>next <span class="token operator">=</span> r
+    r<span class="token punctuation">.</span>prev <span class="token operator">=</span> r
+    <span class="token keyword">return</span> r
+<span class="token punctuation">&#125;</span>
+
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    r <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>Ring<span class="token punctuation">)</span>
+    r<span class="token punctuation">.</span><span class="token function">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre><br>因为绑定前驱和后驱节点为自己，没有循环，时间复杂度为：O(1)<br>创建一个指定大小N的循环链表，值全为空</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 创建N个节点的循环链表</span>
+<span class="token keyword">func</span> <span class="token function">New</span><span class="token punctuation">(</span>n <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">*</span>Ring <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> n <span class="token operator">&lt;=</span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span>
+    <span class="token punctuation">&#125;</span>
+    r <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>Ring<span class="token punctuation">)</span>
+    p <span class="token operator">:=</span> r
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> n<span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+        p<span class="token punctuation">.</span>next <span class="token operator">=</span> <span class="token operator">&amp;</span>Ring<span class="token punctuation">&#123;</span>prev<span class="token punctuation">:</span> p<span class="token punctuation">&#125;</span>
+        p <span class="token operator">=</span> p<span class="token punctuation">.</span>next
+    <span class="token punctuation">&#125;</span>
+    p<span class="token punctuation">.</span>next <span class="token operator">=</span> r
+    r<span class="token punctuation">.</span>prev <span class="token operator">=</span> p
+    <span class="token keyword">return</span> r
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>会连续绑定前驱和后驱节点，时间复杂度为：<code>O(n)</code>。</p>
+<h4 id="获取上一个或下一个节点"><a href="#获取上一个或下一个节点" class="headerlink" title="获取上一个或下一个节点"></a><strong>获取上一个或下一个节点</strong></h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 获取下一个节点</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>Ring<span class="token punctuation">)</span> <span class="token function">Next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Ring <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> r<span class="token punctuation">.</span>next <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> r<span class="token punctuation">.</span><span class="token function">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> r<span class="token punctuation">.</span>next
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">// 获取上一个节点</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>Ring<span class="token punctuation">)</span> <span class="token function">Prev</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Ring <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> r<span class="token punctuation">.</span>next <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> r<span class="token punctuation">.</span><span class="token function">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> r<span class="token punctuation">.</span>prev
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>获取前驱或后驱节点，时间复杂度为：O(1)。</p>
+<h4 id="获取第n个节点"><a href="#获取第n个节点" class="headerlink" title="获取第n个节点"></a><strong>获取第n个节点</strong></h4><p>因为链表是循环的，当 n 为负数，表示从前面往前遍历，否则往后面遍历：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>Ring<span class="token punctuation">)</span> <span class="token function">Move</span><span class="token punctuation">(</span>n <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token operator">*</span>Ring <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> r<span class="token punctuation">.</span>next <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> r<span class="token punctuation">.</span><span class="token function">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">switch</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">case</span> n <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">for</span> <span class="token punctuation">;</span> n <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">;</span> n<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+            r <span class="token operator">=</span> r<span class="token punctuation">.</span>prev
+        <span class="token punctuation">&#125;</span>
+    <span class="token keyword">case</span> n <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">for</span> <span class="token punctuation">;</span> n <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">;</span> n<span class="token operator">--</span> <span class="token punctuation">&#123;</span>
+            r <span class="token operator">=</span> r<span class="token punctuation">.</span>next
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> r
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>因为需要遍历 n 次，所以时间复杂度为：O(n)。</p>
+<h2 id="2-顺序存储结构（数组）"><a href="#2-顺序存储结构（数组）" class="headerlink" title="2.顺序存储结构（数组）"></a>2.顺序存储结构（数组）</h2>]]></content>
+      <categories>
+        <category>技术笔记</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+        <tag>数据结构</tag>
+        <tag>线性表</tag>
+      </tags>
+  </entry>
 </search>
