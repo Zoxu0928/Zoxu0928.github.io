@@ -397,8 +397,8 @@
                                 <span class="chip bg-color">数据结构</span>
                             </a>
                         
-                            <a href="/tags/%E7%BA%BF%E6%80%A7%E8%A1%A8/">
-                                <span class="chip bg-color">线性表</span>
+                            <a href="/tags/%E9%93%BE%E8%A1%A8%E3%80%81%E6%95%B0%E7%BB%84/">
+                                <span class="chip bg-color">链表、数组</span>
                             </a>
                         
                     </div>
@@ -584,6 +584,61 @@
 <span class="token punctuation">&#125;</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>因为需要遍历 n 次，所以时间复杂度为：O(n)。</p>
+<h4 id="添加节点"><a href="#添加节点" class="headerlink" title="添加节点"></a><strong>添加节点</strong></h4><p> 1）尾部插入：最简单的情况，把最后一个节点的next指针指向新插入的节点<br> 2）头部插入：分为两个步骤<br>&emsp;&emsp;a.把新节点的next指针指向原先的头节点<br>&emsp;&emsp;b.把更新的节点变为链表的头节点<br>3）中间插入：分为两个步骤<br>&emsp;&emsp;a.新节点的next指针，指向插入位置的节点<br>&emsp;&emsp;b.插入位置前置节点的next指针，指向新节点</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 往节点A，链接一个节点，并且返回之前节点A的后驱节点</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>Ring<span class="token punctuation">)</span> <span class="token function">Link</span><span class="token punctuation">(</span>s <span class="token operator">*</span>Ring<span class="token punctuation">)</span> <span class="token operator">*</span>Ring <span class="token punctuation">&#123;</span>
+    n <span class="token operator">:=</span> r<span class="token punctuation">.</span><span class="token function">Next</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> s <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
+        p <span class="token operator">:=</span> s<span class="token punctuation">.</span><span class="token function">Prev</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        r<span class="token punctuation">.</span>next <span class="token operator">=</span> s
+        s<span class="token punctuation">.</span>prev <span class="token operator">=</span> r
+        n<span class="token punctuation">.</span>prev <span class="token operator">=</span> p
+        p<span class="token punctuation">.</span>next <span class="token operator">=</span> n
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> n
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>添加节点的操作比较复杂，如果节点 s 是一个新的节点。<br>那么也就是在 r 节点后插入一个新节点 s，而 r 节点之前的后驱节点，将会链接到新节点后面，并返回 r 节点之前的第一个后驱节点 n，图如下：</p>
+<img src="/2021/06/05/DataStructureNote/2.png" class="">
+<p>可以看到插入新节点，会重新形成一个环，新节点 s 被插入了中间。<br>更加详细的过程</p>
+<blockquote>
+<p>这里描述的更加详细<br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/f68ccf0282da">https://www.jianshu.com/p/f68ccf0282da</a></p>
+</blockquote>
+<img src="/2021/06/05/DataStructureNote/3.png" class="">
+<p>执行以下程序：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token function">linkNewTest</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+     <span class="token comment">// 第一个节点</span>
+     r <span class="token operator">:=</span> <span class="token operator">&amp;</span>Ring<span class="token punctuation">&#123;</span>Value<span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">&#125;</span>
+ 
+     <span class="token comment">// 链接新的五个节点</span>
+     r<span class="token punctuation">.</span><span class="token function">Link</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>Ring<span class="token punctuation">&#123;</span>Value<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+     r<span class="token punctuation">.</span><span class="token function">Link</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>Ring<span class="token punctuation">&#123;</span>Value<span class="token punctuation">:</span> <span class="token number">2</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+     r<span class="token punctuation">.</span><span class="token function">Link</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>Ring<span class="token punctuation">&#123;</span>Value<span class="token punctuation">:</span> <span class="token number">3</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+     r<span class="token punctuation">.</span><span class="token function">Link</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>Ring<span class="token punctuation">&#123;</span>Value<span class="token punctuation">:</span> <span class="token number">4</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+ 
+     node <span class="token operator">:=</span> r
+     <span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+         <span class="token comment">// 打印节点值</span>
+         fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Value<span class="token punctuation">)</span>
+ 
+         <span class="token comment">// 移到下一个节点</span>
+         node <span class="token operator">=</span> node<span class="token punctuation">.</span><span class="token function">Next</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+ 
+         <span class="token comment">//  如果节点回到了起点，结束</span>
+         <span class="token keyword">if</span> node <span class="token operator">==</span> r <span class="token punctuation">&#123;</span>
+             <span class="token keyword">return</span>
+         <span class="token punctuation">&#125;</span>
+     <span class="token punctuation">&#125;</span>
+ <span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">linkNewTest</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>每次链接的是一个新节点，那么链会越来越长，仍然是一个环。因为只是更改链接位置，时间复杂度为：O(1)。</p>
 <h2 id="2-顺序存储结构（数组）"><a href="#2-顺序存储结构（数组）" class="headerlink" title="2.顺序存储结构（数组）"></a>2.顺序存储结构（数组）</h2>
                 
             </div>
@@ -606,8 +661,8 @@
                                     <span class="chip bg-color">数据结构</span>
                                 </a>
                             
-                                <a href="/tags/%E7%BA%BF%E6%80%A7%E8%A1%A8/">
-                                    <span class="chip bg-color">线性表</span>
+                                <a href="/tags/%E9%93%BE%E8%A1%A8%E3%80%81%E6%95%B0%E7%BB%84/">
+                                    <span class="chip bg-color">链表、数组</span>
                                 </a>
                             
                         </div>
