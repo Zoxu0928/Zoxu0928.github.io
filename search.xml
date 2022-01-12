@@ -1,6 +1,760 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>关于我</title>
+    <url>/2021/02/06/AboutMe/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="👨🏻‍💻-ZoXu"><a href="#👨🏻‍💻-ZoXu" class="headerlink" title="👨🏻‍💻 ZoXu"></a><center>👨🏻‍💻 ZoXu</center></h1><p> <strong><center>A Developer,Live in Beijing,China</center></strong></p>
+<img src="/images/AboutMe.jpeg" width="500" alt="ZoXu" style="border-radius:50%">
+
+<center>姓名：Zoxu</center>
+<center>现居：北京市昌平区</center>
+<center>家乡：河南省郑州市</center>
+<center>就职于：JDCloud</center>
+<center>email: zhouxu0928@126.com</center>
+<center>WeChat: zhouxu_0928</center>
+<center>爱好：旅行，机车，摄影，健身</center>
+<center>技术栈：Java、Golang、Kubernetes</center>]]></content>
+      <categories>
+        <category>我和她</category>
+      </categories>
+      <tags>
+        <tag>关于我</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Golang调度器GMP模型-学习笔记</title>
+    <url>/2022/01/11/Golang-GMP/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>    首先要了解一下<code>并发（concurrency）</code>和<code>并行（parallesim）</code>的区别。</p>
+<ul>
+<li><p>并发：逻辑上具有处理多个同时性任务的能力</p>
+</li>
+<li><p>并行：物理上同一时刻执行多个并发任务</p>
+</li>
+</ul>
+<p>    通常所说的<code>并发编程</code>，也就是说它允许多个任务同时执行。但实际上并不是在同一时刻被执行。在单核处理器上，通过多线程共享CPU时间片串行执行。</p>
+<p>    <code>并行</code>则依赖于多核处理器等物理资源，让多个任务可以并行执行（并发且并行）。</p>
+<p>     <img src="/2022/01/11/Golang-GMP/1.png" class="" title="多线程&#x2F;多进程操作系统"></p>
+<h1 id="一、Golang调度器的由来"><a href="#一、Golang调度器的由来" class="headerlink" title="一、Golang调度器的由来"></a>一、Golang调度器的由来</h1><p>    前言中说道，多线程\多进程的操作系统中，解决了阻塞的问题。但是新的问题又出现了，进程拥有太多的资源，进程的创建、切换、销毁都会占用很长的时间。如果进程过多，CPU很大的一部分都用来进行进程调度了。</p>
+<img src="/2022/01/11/Golang-GMP/2.png" class="" title="cpu浪费时间成本">
+
+<h2 id="1-协程来提高CPU利用率"><a href="#1-协程来提高CPU利用率" class="headerlink" title="1.协程来提高CPU利用率"></a>1.协程来提高CPU利用率</h2><p>    多线程、多进程已经提高了系统的并发能力，但是在当今互联网高并发场景下，为每个任务都创建一个线程是不现实的，会消耗大量的内存。</p>
+<p>    <strong>引入<code>内核态</code>线程和<code>用户态</code>线程</strong></p>
+<blockquote>
+<p> 一个“用户态线程”必须要绑定一个“内核态线程”，但是CPU并不知道有“用户态线程”的存在。它只知道它运行的是一个“内核态线程”。</p>
+</blockquote>
+<p>    <img src="/2022/01/11/Golang-GMP/3.png" class=""></p>
+<p>    再去细化分类一下，内核线程依然叫做<code>线程(thread)</code>，用户线程叫做<code>协程(co-routine)</code></p>
+<p>      <img src="/2022/01/11/Golang-GMP/4.png" class=""></p>
+<h2 id="2-线程-thread-和协程-co-routine-的3种关系"><a href="#2-线程-thread-和协程-co-routine-的3种关系" class="headerlink" title="2.线程(thread)和协程(co-routine)的3种关系"></a>2.线程(thread)和协程(co-routine)的3种关系</h2><h3 id="1）N-1-关系"><a href="#1）N-1-关系" class="headerlink" title="1）N:1 关系"></a>1）N:1 关系</h3><p>    即<code>N个协程绑定1个线程</code>，优点是<strong>协程在用户态线程即完成切换，不会陷入内核态，切换轻量且快速</strong>。缺点：1个进程的所有协程都绑定在1个线程上。一旦某个协程阻塞，造成线程阻塞，本进程的其他协程都无法进行了，根本没有并发能力。</p>
+<img src="/2022/01/11/Golang-GMP/5.png" class="" title="N:1关系">
+
+<h3 id="2）1-1-关系"><a href="#2）1-1-关系" class="headerlink" title="2）1:1 关系"></a>2）1:1 关系</h3><p>    即<code>1 个协程绑定 1 个线程</code>。</p>
+<p>    优点：最容易实现</p>
+<p>    缺点：协程的创建、删除和切换的代价都由CPU完成，略显昂贵。</p>
+<h3 id="3-M-N-关系"><a href="#3-M-N-关系" class="headerlink" title="3)  M:N 关系"></a>3)  M:N 关系</h3><p>    <code>M 个协程绑定 N 个线程</code> ，克服了以上两种模型的缺点，但实现起来最为复杂</p>
+<img src="/2022/01/11/Golang-GMP/6.png" class="" title="M:N关系">
+
+<p>    协程跟线程是有区别的。</p>
+<p>    线程由CPU调度，是抢占式的。</p>
+<p>    <strong>协程由用户态调度，是协作式的，一个协程让出CPU后，才执行下一个协程。</strong></p>
+<h2 id="3-Go语言的协程goroutine"><a href="#3-Go语言的协程goroutine" class="headerlink" title="3.Go语言的协程goroutine"></a>3.Go语言的协程goroutine</h2><p>    <strong>Go为了提供更容易使用的并发方法，使用了goroutine和channel</strong>。</p>
+<p>    goroutine来自协程的概念，让一组可复用的函数运行在一组线程之上。即使有协程阻塞，该线程的其他协程也可以被`runtime``调度，转移到其他可运行的线程上。</p>
+<p>    Go中，协程被称为goroutine，它非常轻量，一个goroutine只占几KB，并且这几KB就足够goroutine运行完，这就能在有限的内存空前内支持大量goroutine，支持了更多的并发。虽然一个goroutine的栈只占几KB，但实际是可伸缩的，如果需要更多内容，`runtime``会自动为goroutine分配。</p>
+<p>    goroutine特点：</p>
+<ul>
+<li><p>占用内存更小</p>
+</li>
+<li><p>调度更灵活</p>
+</li>
+</ul>
+<h1 id="二、被废弃的goroutine调度器-GM模型"><a href="#二、被废弃的goroutine调度器-GM模型" class="headerlink" title="二、被废弃的goroutine调度器-GM模型"></a>二、被废弃的goroutine调度器-GM模型</h1><p>在Go1.1之前Go的调度模型其实是GM模型，现在使用的版本是2012年重新设计的。废弃GM模型的原因是调度器性能存在问题。</p>
+<h2 id="1-GM模型实现原理"><a href="#1-GM模型实现原理" class="headerlink" title="1.GM模型实现原理"></a>1.GM模型实现原理</h2><blockquote>
+<p>大部分文章都是会用 G 来表示 Goroutine，用 M 来表示线程，那么我们也会用这种表达的对应关系。</p>
+</blockquote>
+<p>   <img src="/2022/01/11/Golang-GMP/7.png" class="" title="对应关系"></p>
+<p>用一个动图来展示一下GM模型的工作原理</p>
+<p>   <img src="/2022/01/11/Golang-GMP/GM-gif.gif" class="G" title="GM模型工作原理"></p>
+<h2 id="2-源码解读"><a href="#2-源码解读" class="headerlink" title="2.源码解读"></a>2.源码解读</h2><p>看一下Go1.0.1的调度器源码的核心关键步骤</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go">static void
+<span class="token function">schedule</span><span class="token punctuation">(</span>G <span class="token operator">*</span>gp<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+ <span class="token operator">...</span>
+ <span class="token function">schedlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ <span class="token keyword">if</span><span class="token punctuation">(</span>gp <span class="token operator">!=</span> <span class="token boolean">nil</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token operator">...</span>
+  <span class="token keyword">switch</span><span class="token punctuation">(</span>gp<span class="token operator">-</span><span class="token operator">></span>status<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+  <span class="token keyword">case</span> Grunnable<span class="token punctuation">:</span>
+  <span class="token keyword">case</span> Gdead<span class="token punctuation">:</span>
+   <span class="token comment">// Shouldn't have been running!</span>
+   runtime·<span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"bad gp->status in sched"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">case</span> Grunning<span class="token punctuation">:</span>
+   gp<span class="token operator">-</span><span class="token operator">></span>status <span class="token operator">=</span> Grunnable<span class="token punctuation">;</span>
+   <span class="token function">gput</span><span class="token punctuation">(</span>gp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token keyword">break</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+
+ gp <span class="token operator">=</span> <span class="token function">nextgandunlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ gp<span class="token operator">-</span><span class="token operator">></span>readyonstop <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+ gp<span class="token operator">-</span><span class="token operator">></span>status <span class="token operator">=</span> Grunning<span class="token punctuation">;</span>
+ m<span class="token operator">-</span><span class="token operator">></span>curg <span class="token operator">=</span> gp<span class="token punctuation">;</span>
+ gp<span class="token operator">-</span><span class="token operator">></span>m <span class="token operator">=</span> m<span class="token punctuation">;</span>
+ <span class="token operator">...</span>
+ runtime·<span class="token function">gogo</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gp<span class="token operator">-</span><span class="token operator">></span>sched<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>分析一下过程：</p>
+<ul>
+<li><p>调用<code>schedlock()</code>方法获取全局锁</p>
+</li>
+<li><p>获取全局锁成功后，将当前Goroutine状态从Running（正在被调度）改为Runnable（可以被调度）</p>
+</li>
+<li><p>调用<code>gput</code>方法来保存当前Goroutine的运行状态等信息</p>
+</li>
+<li><p>调用<code>nextgandunlock</code>方法来寻找下一个可运行的Goroutine，并且释放全局锁给其他调度使用</p>
+</li>
+<li><p>获取到下一个待运行的Goroutine后，将其状态修改为Running。</p>
+</li>
+<li><p>调用<code>runtime.gogo</code>方法，将刚刚所获取到的下一个待执行的Goroutine运行起来，进入下一轮调度。</p>
+</li>
+</ul>
+<h2 id="3-GM模型的缺点"><a href="#3-GM模型的缺点" class="headerlink" title="3.GM模型的缺点"></a>3.GM模型的缺点</h2><ul>
+<li><p>创建、销毁、调度G都需要每个M获取锁，这就形成了激烈的锁竞争。</p>
+</li>
+<li><p>M转移G会造成延迟和额外的系统负载。比如当G中包含创建新协程G2，为了继续执行G，需要把G2交给M2执行，也就造成了很差的局部性。因为G和G2是相关的，最好放在M上执行，而不是其他M。</p>
+</li>
+<li><p>系统调用（CPU在M之间的切换）导致频繁的线程阻塞和取消阻塞操作增加了系统开销。</p>
+</li>
+</ul>
+<h1 id="三、Goroutine调度器的GMP模型的设计思想"><a href="#三、Goroutine调度器的GMP模型的设计思想" class="headerlink" title="三、Goroutine调度器的GMP模型的设计思想"></a>三、Goroutine调度器的GMP模型的设计思想</h1><p>面对之前调度器的问题，Go设计了新的调度器。</p>
+<p>在新的调度器中，除了M(thread)和G(goroutine)，又引进了P(Processor)</p>
+<p>  <img src="/2022/01/11/Golang-GMP/8.png" class="" title="对应关系"></p>
+<p><strong>Processor，它包含了运行goroutine的资源</strong>，如果线程想运行goroutine，必须先获取P，P中还包含了可运行的G队列。</p>
+<h2 id="1-GMP模型"><a href="#1-GMP模型" class="headerlink" title="1.GMP模型"></a>1.GMP模型</h2><p>在Go中，线程是运行goroutine的实体，调度器的功能是把可运行的goroutine分配到工作线程上。</p>
+<p> <img src="/2022/01/11/Golang-GMP/9.png" class="" title="GMP模型"></p>
+<ul>
+<li><p>全局队列（Global Queue）：存放等待运行的G。</p>
+</li>
+<li><p>P的本地队列：同全局队列类似，存放的也是等待运行的G，存的数量有限，不超过<code>256个</code>。新建G‘时，G’会有限加入到P的本地队列，如果队列满了，则会把本地队列中一半的G移动到全局队列。</p>
+</li>
+<li><p>P列表：所有的P都在程序启动时创建，并保存在数组中，最多有<code>GOMAXPROCS(可配置)</code>个。</p>
+</li>
+<li><p>M：线程想运行任务就得获取P，从P的本地队列获取G。</p>
+</li>
+</ul>
+<h2 id="2-GMP的工作流程"><a href="#2-GMP的工作流程" class="headerlink" title="2.GMP的工作流程"></a>2.GMP的工作流程</h2><ul>
+<li>新建<code>G</code>时，新<code>G</code>会优先加入到<code>P</code>的本地队列。如果本地队列满了，则会把本地队列中一半的G移动到全局队列。</li>
+</ul>
+<p>    <img src="/2022/01/11/Golang-GMP/GMP-1.gif" class="" title="GMP模型"></p>
+<ul>
+<li><code>P</code>的本地队列为空时，就从全局队列里获取。</li>
+</ul>
+<p>    <img src="/2022/01/11/Golang-GMP/GMP-2.gif" class="" title="GMP模型"></p>
+<ul>
+<li>如果全局队列为空时，<code>M</code> 会从其他<code>P</code>的本地队列偷（stealing）一半G放到自己<code>P</code>的本地队列</li>
+</ul>
+<p>    <img src="/2022/01/11/Golang-GMP/GMP-stealing.gif" class="" title="GMP模型"></p>
+<ul>
+<li><code>M</code>运行<code>G</code>，<code>G</code>执行之后，<code>M</code>会从<code>P</code>获取下一个<code>G</code>,不断重复下去。</li>
+</ul>
+<p>    <img src="/2022/01/11/Golang-GMP/GMP-3.gif" class="" title="GMP模型"></p>
+<h2 id="3-有没有什么限制"><a href="#3-有没有什么限制" class="headerlink" title="3.有没有什么限制"></a>3.有没有什么限制</h2><p>在了解GMP的基础知识和运行原理之后，我们要知道在协程的运行过程中，真正干活的GMP又分别被什么约束？</p>
+<h3 id="1）M的限制"><a href="#1）M的限制" class="headerlink" title="1）M的限制"></a>1）M的限制</h3><p>    在协程的执行中，真正干活的是M（系统线程），因为G是用户态的东西，最终执行都是得映射到一个M上去运行。</p>
+<p>    那么M有没有限制呢？</p>
+<p>    答案是：有的。在Go语言中，M的默认数量限制是10000，如果超出则会报错</p>
+<pre class="line-numbers language-none"><code class="language-none">GO: runtime: program exceeds 10000-thread limit<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>通常只有在Goroutine出现阻塞操作的情况下，才会遇到这种情况，这也可能预示着你的程序有问题。</p>
+<p>一个M阻塞了，会创建新的M。</p>
+<p>若确切是需要那么多，还可以通过 <code>debug.SetMaxThreads</code> 方法进行设置。</p>
+<h3 id="2）G的限制"><a href="#2）G的限制" class="headerlink" title="2）G的限制"></a>2）G的限制</h3><p>Goroutine的创建数量是否有限制？</p>
+<p>答案是：没有</p>
+<p>但是理论上会受内存的影响。</p>
+<p>答案是：没有。但<strong>理论上会受内存的影响</strong>，假设一个 Goroutine 创建需要 4k（via @GoWKH）：</p>
+<ul>
+<li><p>4k * 80,000 = 320,000k ≈ 0.3G内存</p>
+</li>
+<li><p>4k * 1,000,000 = 4,000,000k ≈ 4G内存</p>
+</li>
+</ul>
+<p>以此就可以相对计算出来一台单机在通俗情况下，所能够创建 Goroutine 的大概数量级别。</p>
+<p>注：Goroutine 创建所需申请的 2-4k 是需要连续的内存块。</p>
+<h3 id="3）P的限制"><a href="#3）P的限制" class="headerlink" title="3）P的限制"></a>3）P的限制</h3><p><strong>P的数量受环境变量</strong><code>GOMAXPROCS</code> 的直接影响。</p>
+<p>环境变量 <code>GOMAXPROCS</code> 又是什么？在 Go 语言中，通过设置 <code>GOMAXPROCS</code>，用户可以调整调度中 P（Processor）的数量。</p>
+<p>另一个重点在于，与 P 相关联的的 M（系统线程），是需要绑定 P 才能进行具体的任务执行的，<strong>因此 P 的多少会影响到 Go 程序的运行表现</strong>。</p>
+<p>P 的数量基本是受本机的核数影响。</p>
+<h3 id="4）何为之合理？"><a href="#4）何为之合理？" class="headerlink" title="4）何为之合理？"></a>4）何为之合理？</h3><p>在介绍完 GMP 各自的限制后，我们回到一个重点，就是 “Goroutine 数量怎么预算，才叫合理？”。</p>
+<p>“合理” 这个词，是需要看具体场景来定义的，可结合上述对 GPM 的学习和了解。得出：</p>
+<ul>
+<li><p>M：有限制，默认数量限制是 10000，可调整。</p>
+</li>
+<li><p>G：没限制，但受内存影响。</p>
+</li>
+<li><p>P：受本机的核数影响，可大可小，不影响 G 的数量创建。</p>
+</li>
+</ul>
+<p>Goroutine 数量在 MG 的可控限额以下，多个把个、几十个，少几个其实没有什么影响，就可以称其为 “合理”。</p>
+<h3 id="5）真实情况"><a href="#5）真实情况" class="headerlink" title="5）真实情况"></a>5）真实情况</h3><p>在真实的应用场景中，没法如此简单的定义。如果你 Goroutine：</p>
+<ul>
+<li><p>在频繁请求 HTTP，MySQL，打开文件等，那假设短时间内有几十万个协程在跑，那肯定就不大合理了（可能会导致  too many files open）。</p>
+</li>
+<li><p>常见的 Goroutine 泄露所导致的 CPU、Memory 上涨等，还是得看你的 Goroutine 里具体在跑什么东西。</p>
+</li>
+</ul>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p>[1]《Golang 调度器 GMP 原理与调度全分析》 ——Aceld :<a href="https://learnku.com/articles/41728">https://learnku.com/articles/41728</a></p>
+<p>[2]《GMP模型为什么要有P》 ——煎鱼:<a href="https://mp.weixin.qq.com/s/an7dml9NLOhqOZjEGLdEEw">https://mp.weixin.qq.com/s/an7dml9NLOhqOZjEGLdEEw</a></p>
+]]></content>
+      <categories>
+        <category>技术笔记</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+        <tag>golang</tag>
+        <tag>GMP</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>入职3年啦</title>
+    <url>/2022/01/08/Induction3YearReview/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><blockquote>
+<center>希望2022年，我们每个人都平平安安，工作顺利</center>
+<center>平安顺遂</center>
+</blockquote>
+<p>&emsp;&emsp;今天早晨睡醒，收到了公司通讯工具的提醒，打开后发现是一条祝福<br>&emsp;&emsp;时间过得好快，一转眼已经来公司3年了，仿佛3年前父母来北京探望我的场景还历历在目，19年的元旦，一家人在北京一起过了年</p>
+<img src="/2022/01/08/Induction3YearReview/1.png" class="">
+<p>&emsp;&emsp;18年12月，老爸老妈时隔多年又踏上了去往北京的火车，得知我要入职的地方在鸟巢旁边，也是兴奋不已的要去鸟巢逛一逛</p>
+<img src="/2022/01/08/Induction3YearReview/2.png" class="">
+<p>&emsp;&emsp;19年的1月8号，起了个大早跑到亦庄总部办理了入职，匆匆忙忙也忘记了拍照纪念，紧接着就开始了繁忙的生活<br>&emsp;&emsp;这是刚过完年，开始了第一个项目时候拍下的纪念，那天发了好多红牛hhhhhh😂</p>
+<img src="/2022/01/08/Induction3YearReview/3.png" class="">
+<p>&emsp;&emsp;项目刚开始的时候时间还是很紧张的，开始频繁的加班，那天是元宵节，记得我还发了个朋友圈，猿宵节，是程序猿通宵赶代码的中国传统节日hhhhh😂</p>
+<img src="/2022/01/08/Induction3YearReview/4.png" class="">
+<p>&emsp;&emsp;频繁的加班就意味着总是吃吃吃吃，已经记不清多少个夜晚干完活撸串啃披萨了，这也是我现在成为一个胖子的重要原因</p>
+<img src="/2022/01/08/Induction3YearReview/5.png" class="">
+<p>&emsp;&emsp;臭美一下，19年2月24号晚上10点多拍的，刚下班，那个时候还是个小鲜肉</p>
+<img src="/2022/01/08/Induction3YearReview/6.png" class="">
+<p>&emsp;&emsp;忙碌的工作中也结识了好多朋友，苦逼加班三人组也由此诞生，偶尔还会一起去五道口“学习😁</p>
+<img src="/2022/01/08/Induction3YearReview/7.png" class="">
+<p>&emsp;&emsp;19年的中秋节，公司发的八音盒和月饼</p>
+<img src="/2022/01/08/Induction3YearReview/8.png" class="">
+<p>&emsp;&emsp;19年还认识了我的她~在枯燥的公司-家两点一线的生活中，她进入了我的生活</p>
+<img src="/2022/01/08/Induction3YearReview/9.png" class="">
+<p>&emsp;&emsp;19年真的是忙碌的一年，我们的项目也经历了从0到1的过程，这张是去海南参加姐姐的婚礼，晚上在酒店改bug时拍下的😂</p>
+<img src="/2022/01/08/Induction3YearReview/10.png" class="">
+<p>&emsp;&emsp;19年12月份，又是一个周末，下雪啦，去公司加班的路上随手拍下的</p>
+<img src="/2022/01/08/Induction3YearReview/11.png" class="">
+<p>&emsp;&emsp;20年2月，疫情爆发了，开始了在家办公的日子</p>
+<img src="/2022/01/08/Induction3YearReview/12.png" class="">
+<p>&emsp;&emsp;在租住的小区随手拍下的，北京的天气时而让我喜欢，时而让我讨厌</p>
+<img src="/2022/01/08/Induction3YearReview/13.png" class="">
+<p>&emsp;&emsp;20年的日子相比于19年，轻松了许多，饭后也有时间去公司周边散散步了</p>
+<img src="/2022/01/08/Induction3YearReview/14.png" class="">
+<p>&emsp;&emsp;20年7月，难兄难弟的一次悲惨出差生活，蹲了2天的机房</p>
+<img src="/2022/01/08/Induction3YearReview/15.png" class="">
+<p>&emsp;&emsp;20年9月，在公司度过的第二个生日呀</p>
+<img src="/2022/01/08/Induction3YearReview/16.png" class="">
+<p>&emsp;&emsp;转眼间20年就过去了，公司组织架构也做了调整，我跟随着项目也来到了现在的部门，技术栈也从java转为了go</p>
+<img src="/2022/01/08/Induction3YearReview/17.png" class="">
+<p>&emsp;&emsp;21年在新的部门，学会了很多新的技术，也成长了很多，职级和薪资方面也有了进步。同时，我也迈向了人生的一个新的阶段，我完成了求婚、订婚</p>
+<img src="/2022/01/08/Induction3YearReview/18.png" class="">
+<p>&emsp;&emsp;22年已经开始，新的一年，我要结婚啦！！！也代表着我身后有了一个家庭，我有更多的责任，新的一年，要更加努力的工作，在事业上有提升！！加油呀</p>
+]]></content>
+      <categories>
+        <category>小周的北漂生活</category>
+      </categories>
+      <tags>
+        <tag>北漂生活</tag>
+        <tag>职场碎碎念</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>新职场</title>
+    <url>/2021/12/25/MoveToJDTBuilding/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><blockquote>
+<p>这周公司搬到了新的办公楼–京东科技大厦。<br>3年前的冬天，入职了京东，来到了北辰世纪中心，一转眼就3年过去了，数不清在北辰熬了多少个通宵😂，说实话挺舍不得这里的。<br>但是看到了新的办公楼，还是很开心啊。毕竟来到了中关村，大牛云集的地方，新的办公楼基础设施也更完善一些，可以每天晚上去撸铁啦。</p>
+</blockquote>
+<p>先来看看外景吧</p>
+<img src="/2021/12/25/MoveToJDTBuilding/waijing.jpeg" class="" title="京东科技大厦">
+
+<p>早上参加了剪裁仪式，见到了公司的各位大佬</p>
+<img src="/2021/12/25/MoveToJDTBuilding/wushizi.jpeg" class="" title="剪裁仪式">
+
+<p>然后吃了蛋糕呀，虽然到我手里就剩了渣渣了，不过还是沾沾喜气吧</p>
+<img src="/2021/12/25/MoveToJDTBuilding/chidangao.jpeg" class="" title="大大的蛋糕">
+
+<p>上楼收拾一下工位，工位旁边就是大大的落地窗，可以俯瞰中关村，比之前宽敞多啦</p>
+<img src="/2021/12/25/MoveToJDTBuilding/bangongzhuo.jpeg" class="" title="工位">
+
+<p>中午和同事一起去了新食堂，人山人海，不过新的食堂种类倒是挺多，味道也不错，中午给自己安排了个19元自选菜😂</p>
+<img src="/2021/12/25/MoveToJDTBuilding/diyidunwucan.jpeg" class="" title="午餐">
+
+<p>到了下午部门竟然给我们发了新的书包和衣服，瞬间有了一种开学第一天的感觉，虽然很…程序员吧，但是有总比没有强</p>
+<img src="/2021/12/25/MoveToJDTBuilding/xinshubao.jpeg" class="" title="一眼就能看出来是程序员的书包">
+<img src="/2021/12/25/MoveToJDTBuilding/xinyifu.jpeg" class="" title="带着公司logo的衣服">
+
+<p>就介绍到这吧，新的职场新的开始，马上也要迎来新的一年，继续努力吧小周！！💪🏻</p>
+]]></content>
+      <categories>
+        <category>小周的北漂生活</category>
+      </categories>
+      <tags>
+        <tag>北漂生活</tag>
+        <tag>职场碎碎念</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>golang-map</title>
+    <url>/2021/12/18/golang-map/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h2 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h2><h3 id="1-Map的Value赋值"><a href="#1-Map的Value赋值" class="headerlink" title="(1) Map的Value赋值"></a>(1) Map的Value赋值</h3><blockquote>
+<p>下面代码编译会出现什么结果？</p>
+</blockquote>
+<blockquote>
+<p>test7.go</p>
+</blockquote>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token string">"fmt"</span>
+
+<span class="token keyword">type</span> Student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Name <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">var</span> list <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Student
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+
+    list <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Student<span class="token punctuation">)</span>
+
+    student <span class="token operator">:=</span> Student<span class="token punctuation">&#123;</span><span class="token string">"Aceld"</span><span class="token punctuation">&#125;</span>
+
+    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> student
+    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Name <span class="token operator">=</span> <span class="token string">"LDB"</span>
+
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>结果</strong></p>
+<p>编译失败，<code>./test7.go:18:23: cannot assign to struct field list[&quot;student&quot;].Name in map</code></p>
+<p><strong>分析</strong></p>
+<p><code>map[string]Student</code> 的value是一个Student结构值，所以当<code>list[&quot;student&quot;] = student</code>,是一个值拷贝过程。而<code>list[&quot;student&quot;]</code>则是一个值引用。那么值引用的特点是<code>只读</code>。所以对<code>list[&quot;student&quot;].Name = &quot;LDB&quot;</code>的修改是不允许的。</p>
+<p><strong>方法一：</strong></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token string">"fmt"</span>
+
+<span class="token keyword">type</span> Student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Name <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">var</span> list <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Student
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+
+    list <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Student<span class="token punctuation">)</span>
+
+    student <span class="token operator">:=</span> Student<span class="token punctuation">&#123;</span><span class="token string">"Aceld"</span><span class="token punctuation">&#125;</span>
+
+    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> student
+    <span class="token comment">//list["student"].Name = "LDB"</span>
+
+    <span class="token comment">/*
+        方法1:
+    */</span>
+    tmpStudent <span class="token operator">:=</span> list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span>
+    tmpStudent<span class="token punctuation">.</span>Name <span class="token operator">=</span> <span class="token string">"LDB"</span>
+    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> tmpStudent
+
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>其中</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">/*
+    方法1:
+*/</span>
+tmpStudent <span class="token operator">:=</span> list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span>
+tmpStudent<span class="token punctuation">.</span>Name <span class="token operator">=</span> <span class="token string">"LDB"</span>
+list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> tmpStudent<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>是先做一次值拷贝，做出一个<code>tmpStudent副本</code>,然后修改该副本，然后再次发生一次值拷贝复制回去，<code>list[&quot;student&quot;] = tmpStudent</code>,但是这种会在整体过程中发生2次结构体值拷贝，性能很差。</p>
+<span id="more"></span>
+
+<p><strong>方法二</strong>：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token string">"fmt"</span>
+
+<span class="token keyword">type</span> Student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Name <span class="token builtin">string</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">var</span> list <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>Student
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+
+    list <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>Student<span class="token punctuation">)</span>
+
+    student <span class="token operator">:=</span> Student<span class="token punctuation">&#123;</span><span class="token string">"Aceld"</span><span class="token punctuation">&#125;</span>
+
+    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">&amp;</span>student
+    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Name <span class="token operator">=</span> <span class="token string">"LDB"</span>
+
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>我们将map的类型的value由Student值，改成Student指针。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">var</span> list <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>Student<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>这样，我们实际上每次修改的都是指针所指向的Student空间，指针本身是常指针，不能修改，<code>只读</code>属性，但是指向的Student是可以随便修改的，而且这里并不需要值拷贝。只是一个指针的赋值。</p>
+<h3 id="2-map的遍历赋值"><a href="#2-map的遍历赋值" class="headerlink" title="(2) map的遍历赋值"></a>(2) map的遍历赋值</h3><hr>
+<blockquote>
+<p>以下代码有什么问题，说明原因</p>
+</blockquote>
+<blockquote>
+<p>test8.go</p>
+</blockquote>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Name <span class="token builtin">string</span>
+    Age  <span class="token builtin">int</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">//定义map</span>
+    m <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>student<span class="token punctuation">)</span>
+
+    <span class="token comment">//定义student数组</span>
+    stus <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>student<span class="token punctuation">&#123;</span>
+        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"zhou"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">24</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"li"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">23</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"wang"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">22</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">//将数组依次添加到map中</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> stu <span class="token operator">:=</span> <span class="token keyword">range</span> stus <span class="token punctuation">&#123;</span>
+        m<span class="token punctuation">[</span>stu<span class="token punctuation">.</span>Name<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">&amp;</span>stu
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">//打印map</span>
+    <span class="token keyword">for</span> k<span class="token punctuation">,</span>v <span class="token operator">:=</span> <span class="token keyword">range</span> m <span class="token punctuation">&#123;</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>k <span class="token punctuation">,</span><span class="token string">"=>"</span><span class="token punctuation">,</span> v<span class="token punctuation">.</span>Name<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>结果</strong></p>
+<p>遍历结果出现错误，输出结果为</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">zhou <span class="token operator">=</span><span class="token operator">></span> wang
+li <span class="token operator">=</span><span class="token operator">></span> wang
+wang <span class="token operator">=</span><span class="token operator">></span> wang<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>map中的3个key均指向数组中最后一个结构体。</p>
+<p><strong>分析</strong></p>
+<p>foreach中，stu是结构体的一个拷贝副本，所以<code>m[stu.Name]=&amp;stu</code>实际上一致指向同一个指针， 最终该指针的值为遍历的最后一个<code>struct的值拷贝</code>。 </p>
+<!-- ![](images/109-foreach.jpeg) -->
+
+<img src="/2021/12/18/golang-map/109-foreach.jpeg" class="" title="foreach">
+
+<p><strong>正确写法</strong></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    Name <span class="token builtin">string</span>
+    Age  <span class="token builtin">int</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">//定义map</span>
+    m <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>student<span class="token punctuation">)</span>
+
+    <span class="token comment">//定义student数组</span>
+    stus <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>student<span class="token punctuation">&#123;</span>
+        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"zhou"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">24</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"li"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">23</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"wang"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">22</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">// 遍历结构体数组，依次赋值给map</span>
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>stus<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span>  <span class="token punctuation">&#123;</span>
+        m<span class="token punctuation">[</span>stus<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>Name<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">&amp;</span>stus<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token comment">//打印map</span>
+    <span class="token keyword">for</span> k<span class="token punctuation">,</span>v <span class="token operator">:=</span> <span class="token keyword">range</span> m <span class="token punctuation">&#123;</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>k <span class="token punctuation">,</span><span class="token string">"=>"</span><span class="token punctuation">,</span> v<span class="token punctuation">.</span>Name<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<!-- ![](images/110-foreach2.jpeg) -->
+
+<img src="/2021/12/18/golang-map/110-foreach2.jpeg" class="" title="foreach2">
+
+<p><strong>运行结果</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">zhou <span class="token operator">=</span><span class="token operator">></span> zhou
+li <span class="token operator">=</span><span class="token operator">></span> li
+wang <span class="token operator">=</span><span class="token operator">></span> wang<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+]]></content>
+      <categories>
+        <category>技术笔记</category>
+      </categories>
+      <tags>
+        <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>我求婚啦</title>
+    <url>/2021/10/05/MarryHer/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script>
+    <div id="aplayer-JTsqQeFE" class="aplayer aplayer-tag-marker meting-tag-marker"
+         data-id="29539085" data-server="netease" data-type="song" data-mode="circulation" data-autoplay="true" data-mutex="true" data-listmaxheight="340px" data-preload="auto" data-theme="#ad7a86"
+    ></div>
+<blockquote>
+<center>你是我突如其来的遇见</center>
+<center> 和始料未及的欢喜</center>
+<center>❤️</center>
+</blockquote>
+<p>&emsp;&emsp;从6月份开始，我脑袋里有了一个念头，我要给她一个很正式很用心的求婚仪式。<br>第1️⃣个idea:<br>&emsp;&emsp;电影院包场，请朋友来冒充观众，中间播放我准备的视频，但是由于太多的不确定性以及中间的疫情，计划泡汤啦😭<br>第2️⃣个idea:<br>&emsp;&emsp;密室逃脱中最后通关的场景是我的求婚。在试探性的询问中得知她并不喜欢这种的带点“惊吓的形式”。好吧也只能pass了😭<br>第3️⃣个idea:<br>&emsp;&emsp;虽然很俗但是很有纪念意义，请往下看</p>
+<center>初见-->永远</center>
+
+<p>&emsp;&emsp;2019年的9月30日，我们第一次见面，去吃了张福记。记得当时我紧张的不停冒汗，也不敢主动牵手。那天，我们正式在一起了。<br>&emsp;&emsp;2021年的9月30日，还是在她下班后，还是在张福记，还是那个位置。转眼间，我们携手走过了整整两年的时间，我希望她能答应我的求婚，和我一起度过余生。</p>
+<p>&emsp;&emsp;那晚吃的菜，好吃的东坡肉。</p>
+<img src="/2021/10/05/MarryHer/chifan.png" class="" title="张福记">
+<p>&emsp;&emsp;准备的玫瑰花。</p>
+<img src="/2021/10/05/MarryHer/flower.png" class="" title="玫瑰花">
+<p>&emsp;&emsp;求婚蛋糕。</p>
+<img src="/2021/10/05/MarryHer/cake.png" class="" title="求婚蛋糕">
+
+<p>&emsp;&emsp;现场布置的小插曲。字母A的灯不亮啦，赶紧找了电工师傅维修，还好虚惊一场😤</p>
+<img src="/2021/10/05/MarryHer/xiaochaqu.png" class="" title="现场布置小插曲">
+
+<p>&emsp;&emsp;这是最终的求婚现场。</p>
+<img src="/2021/10/05/MarryHer/xianchang.png" class="" title="求婚现场">
+
+<p>&emsp;&emsp;我单膝下跪，问她：你愿意嫁给我吗？<br>&emsp;&emsp;这是最终的求婚现场。</p>
+<img src="/2021/10/05/MarryHer/qiuhun.png" class="" title="求婚啦">
+
+<p>&emsp;&emsp;成功啦~为她戴上了blingbling的钻戒💍</p>
+<img src="/2021/10/05/MarryHer/success.png" class="" title="求婚成功">
+
+<p>&emsp;&emsp;最后，附上我准备的视频~</p>
+<center>《一生中最期待的电影》</center>
+
+<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
+<iframe src="//player.bilibili.com/player.html?aid=677886680&bvid=BV1pm4y1X73R&cid=479101459&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" ></iframe></div>
+]]></content>
+      <categories>
+        <category>我和她</category>
+      </categories>
+      <tags>
+        <tag>我和她</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>小仙女生气记录</title>
+    <url>/2021/08/01/angry-record/</url>
+    <content><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="抱歉, 这个密码看着不太对, 请再试试." data-whm="抱歉, 这个文章不能被校验, 不过您还是能看看解密后的内容.">
+  <script id="hbeData" type="hbeData" data-hmacdigest="4e46751bea991dd469a8a2b13d8f6f2cc6d7122c2007e4614af066c4f39415f4">bb708e47e52e3bd7ae6e0a7057ab8e2f215507db890206875a7e2c1cb422e976ec58612545992cdc6a5e05001a9dee1b6e4a16895160372cac128c68d12812ad60b9313ef528e6ee5f66b8089c69ee3bd465a06b7f4b920102cb18818dcc351580516fc5fbb9c81181253e4a6a10d4c36b7200585af0a696fd912b4a95e7a36804d3e0d1060cb829ecfc20969fdce52dbfc6e229313583732fb58e5fea706b1f191c384802e6a84d4b6b2abc20f689134da146874a18fb5831bd543e8aab99db7cccacedb0467fb534b93fbb53023b366632dccd7e12875284a655c595b6451358b563163792a2f67bd301ba95436587b93a16ffbe8b079152377d7d17c004b065af0e0e0f2e7ba2fa890f1f6f78685f5bf238e25a4001babfdc139292661c5b80d035ebff63c4d7cab59b9b9730f3b75b094301ccd741c02c05a0a35c2469661b380f5f9987d06b1417a2f9b9c4a23cae3cd2991b3fda8a3ffa1be683d521e52707fe7e2e113cc8b082aa99b90917b09edf9c9a7cd6ec48d5c3244c8693501efe763da8df2decb14e15fbe28e78ef30e90fafd11e69850ea3fb74414e8ae8649d516af40175bec6f5f015f3413fc854f869198e3a03cdbfaa0384385682a510858a68f02f1296b6b5c1ef4364ca6d23decc846fdf28b324bc96d5c2ec3b65fbfd70d4e9f3699c4d46bb2834bedab85fde80418305348146a0c076833f1af8eef7d407cb780c0b0ddbdd3c6533879c49a0aed2a071d7a1decb9ca9a12e6a1d57c4062dada363479a75c60f20d01d1acf27ade2df92a65bd6e93de6a13547bea1d3b96dceeca32eae76d15c805f8235a3f9f1552d995747e27536d8b2b56cfbdf0bbab9068a43c33590c2ad04fdb4efb9103b78ce88d653025813e16848ab7b2ba00a6ea4d6b09c8094f26343893224636af611b6078edf501c0b03b2321f3230e8d82f0c9644fc50cb9418bf32c8d3be919c6007adaab6059b0458bfb7c236e6aa4ba198739d77c23e9f9423fc64858bc20c8314eb58f1fe71061a40e1443e6712c87bf29e58e8701cf491714fda2d7dfbd0889b82fd8efc1ffea52f988c27aff064a4613f06d0d350af552cc3aa5bfe5d63a177f263e8271c39a7c96319dcd0fef59d0a7cccf51c389fd06ec8a1b52c12c9101ac7187dd0c2a66352cce2ab1b3117000ab9d43333f260abe61efc8e7e0b76bf958782113b1441c41836639544617807f9d4f759fb98fa67fb23ec347bc7a97d66e1d94ce47478d38147733dd2ec2afda04b238f1b91de7b88a548a72067c8939f4a16fb7734ccf13bf4e17dbc94fa935846901b6cb05799fba2a72c9397c6e9cfd144d6ad4180799b8a50d5ae72dbb98f83ac69eb5085613e8135cde07eca868639026691689a153d471b0586dfa5d4ecec4419d553b7dd182c81504b6456d79fc39a52a9f654a2daeabab4d635308c0441e9fb5585ec073d8d03d283ac11f02101981691de32c6fdd560194180204c1fd3b9c0a6742955757654f4f1d3cc158919c0e4b770af0949ee8ee70d07ea2f59e8abad8b36ebdec734a26116d48d8a73746622b0d70aa31cafe9c9fbc50e463a78f7ce20272a523a83dae2965a95313dbaf7b6ce562137c2c2101ec02e5b5df92baf9a6cf0fb544644f6e6a45916722ef7c846fb4bf600a0fdf318579048146f4f2333a491f902813674a3122c5cb319815ca98e9c893688f7b0d6572318e9d664c06e037c37ddeceac3f6c79232722ba8f2c5c038bfa09e839518ae39bedadf01b941e92f212a0f264d02709f5a1042d6101190de7d1e0577a0040125c19d1e7335a4c51cd7e1edaf7e79043bf139e7507473c0226b2a5bfbcfae5fcd23a0cf5a76479b90b0c1bcfb1cc54c1b9066fec0ac7e96699ac12d38a5ab4e299e420873c4d5a158d6ce892b87645c80aa9083bb7d3adc170009bfec184d0f61ec1e728583dd2524c1e15c8bd16100834d64122cf96017a5104cc85ba831cf844ecc5141dcd3a3f0d7c092121f0d3d9d8f851589b6b72243e93ff7b20cdb37a7d842b217bb03942d6621b39cbaa58ced92ed1161fd5b2682cb4fe3dfe79e550cd040543ccca7e9d30d0eb95126ff8735bfdac0c1a437fe5747961c237e98db79750255ef7307a16f4a0c04266107e33a67788c4830dc35f05ae2cbad7ce95e87d7294f466df8561c4e06542e6e70823c04e67291243e2d63d975f1c6da5ab328675f7824d5da74ac22b25d5922e4cf262f3cc790b6bb726cb31b33813ee0650f8d00c03cc2273ec5b8f86c7465c523362c736e9053d62225287b1be7c0e4463dfd9157de731a338eaa4a2e5ed21b14fe9ea6e25a5eb47258716cd89e5480ebb0f3277c406d808ad9296932f1ca73ac6ac459265d6d6e51c691558158cea1fcb3409fcf34b8ed610b375240e5930e33de44940f6385a688ab605354d7d85718fd6f25397348fdf7e74985be0c4d41693055620999f614e04d590ac5b038c678c4735c28c6e8d97c0eb4603d5ee632f5d19a69cd28f9a3cb94986dd3c71fed5e8c0c48dbdb3c1f5b114fddb328534f76a94476874eb012ab0863829744314d517a0d0ee0073b5dd4ed1efcad8a6da201346a751f8600368cd9f2fd490f2579c8cc32f8b1cc23897cb7366461aa9fd63c915447098d03f00087d561e8e678775de5892daecf4b478c3e7492f6bd33a4c6db266c917f3c1b6e89909edb0c3cdd82844a0dd01b92e5cede83d7637a76b3280b9c404953e129c44a2cc552c62aa0b02852b03b7a0268c077766ecb21f6d24f30b67ce7ca624fb25955d82a00dbed5aeb52b13c841d384fc2982a03cb71044d73f8215a5803f285fb02f476342c05d0a242cd9744e0e113637c80a8d97a9dae2ceaea23a6bf4df6fbc0424cfe94b69cce3d4524f5075fb240c3925a7c02c840d911e31d9f75c4926888a0a9fe901b61792a4fd393a6f59fd2973bc3a686c89d259af70653dfc8911b8a5c1b0e8613b1fbd0610982c62c973142ae18db874dd0ec901696b95b8f68adf5545ef628062209f9cd386612ccdb75fb99cb684b4e701e595d6790b9a2555988868343df69391da8e29095caa533a9c0668b966089a3926f46070b79dc7bbcf83198572b0c4abedd73c9087276139fad56a130aaefd231d21d094c61f463aee3e299db9f13c5ba9783bd7aab67cf865ebb885960137c70b4d6ebadc32cd52fdd5da228984f59a262e4cc82d131285541869456757451a19e90a62e9db1e8cf77ca0d10c90c6149c882c77a5091fd34361bdeb124b1bd0dcb728d4121668695bf2dc6fe9c42ad3491b861c513b747dc8f8e972ccdeb5560292c8cc9bd60cc88669a7a2b631a4de372154dc100998178b767c85bf99560a0c98e8162f7ac509492d169938b0c0da251aaee8c42a3f38f8b2cff7db5f8cbb9473497faddbb9082dac262e00af88cfc4241abca036a36ca7a5773a204f050a96e85e4981fd4899f8cbf026fbe56a258c8b53fd6a372afc1fef5a717ac446f35b19f2a9d8e2d3951134fbfc7dab70f6fb033c6391437c582e18ce9b1af67aad5c4d1e9edcc2673a0579f4f2a5f438c00e2075dcb344765795fa2dadb87cc3d33d5c8234fdbdc45470f07ddf8f6b98aeb5939e148614bf7d3dbde3735daa6b4e6b6d55b3701abc4975e2b2e9fda042c827b8b620564623bd7879f0ebce04df1a00cb59184e30eb372fcfe99d094d0760a105b5d9514f68b6f468782f99ee3cbca8479810d455c29e9022cf26e78cffbdd59480700b9230ac0c50818fd40d6f4595f570c09ec6bcddc4628c25220d96ef0d5838f28def169c5cd64f99cd91d74</script>
+  <div class="hbe hbe-content">
+    <div class="hbe hbe-input hbe-input-default">
+      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
+      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
+        <span class="hbe hbe-input-label-content hbe-input-label-content-default">请输入密码.</span>
+      </label>
+    </div>
+  </div>
+</div>
+<script data-pjax src="/lib/hbe.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css">]]></content>
+      <categories>
+        <category>我和她</category>
+      </categories>
+      <tags>
+        <tag>我和她</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>网络知识学习笔记</title>
+    <url>/2021/07/07/http-note/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="一、认识HTTP"><a href="#一、认识HTTP" class="headerlink" title="一、认识HTTP"></a>一、认识HTTP</h1><p>超文本传输协议（Hypertext Transfer Protocol)，可以进行文字分割：超文本（Hypertext），传输（Transfer），协议（Protocol），关系如下：</p>
+<h2 id="什么是超文本"><a href="#什么是超文本" class="headerlink" title="什么是超文本"></a>什么是超文本</h2><p>在互联网早期的时候，我们输入的信息只能保存在本地，无法和其他电脑进行交互。我们保存的信息通常都以<code>文本</code>即简单字符的形式存在，文本是一种能够被计算机解析的有意义的二进制数据包。而随着互联网的高速发展，两台电脑之间能够进行数据的传输后，人们不满足只能在两台电脑之间传输文字，还想要传输图片、音频、视频，甚至点击文字或图片能够进行<code>超链接</code>的跳转，那么文本的语义就被扩大了，这种语义扩大后的文本就被称为<code>超文本(Hypertext)</code>。</p>
+<img src="/2021/07/07/http-note/1.png" class="">
+
+<h2 id="什么是传输"><a href="#什么是传输" class="headerlink" title="什么是传输"></a>什么是传输</h2><p>那么我们上面说到，两台计算机之间会形成互联关系进行通信，我们存储的超文本会被解析成为二进制数据包，由传输载体（例如同轴电缆，电话线，光缆）负责把二进制数据包由计算机终端传输到另一个终端的过程称为<code>传输(transfer)</code>。</p>
+<h2 id="什么是协议"><a href="#什么是协议" class="headerlink" title="什么是协议"></a>什么是协议</h2><p>网络协议就是网络中(包括互联网)传递、管理信息的一些规范。如同人与人之间相互交流是需要遵循一定的规矩一样，计算机之间的相互通信需要共同遵守一定的规则，这些规则就称为网络协议。</p>
+<p> <strong>HTTP 是一个在计算机世界里专门在两点之间传输文字、图片、音频、视频等超文本数据的约定和规范</strong></p>
+<h1 id="二、网络模型"><a href="#二、网络模型" class="headerlink" title="二、网络模型"></a>二、网络模型</h1><p>网络是一个复杂的系统，不仅包括大量的应用程序、端系统、通信链路、分组交换机等，还有各种各样的协议组成，那么现在我们就来聊一下网络中的协议层次。<br>为了给网络协议的设计提供一个结构，网络设计者以<strong>分层</strong>(layer)的方式组织协议，每个协议属于层次模型之一。<strong>每一层都是向它的上一层提供服务</strong>(service)，即所谓的服务模型(service model)。每个分层中所有的协议称为 协议栈(protocol stack)。因特网的协议栈由五个部分组成：<strong>物理层</strong>、<strong>链路层</strong>、<strong>网络层</strong>、<strong>传输层</strong>和<strong>应用层</strong>。我们采用自上而下的方法研究其原理，也就是应用层 -&gt; 物理层的方式。</p>
+<h2 id="OSI模型"><a href="#OSI模型" class="headerlink" title="OSI模型"></a>OSI模型</h2><p>ISO（国际标准化组织）提出来计算机网络应该按照7层来组织，那么7层网络协议栈与5层的区别在哪里？</p>
+<img src="/2021/07/07/http-note/2.png" class="">
+<p>OSI模型比网络模型多了表示层和会话层。<br>表示层主要包括数据压缩和数据加密以及数据描述，数据描述使得应用程序不必担心计算机内部存储格式的问题，而会话层提供了数据交换的定界和同步功能，包括建立检查点和恢复方案。</p>
+<img src="/2021/07/07/http-note/3.png" class="">
+
+<h2 id="应用层"><a href="#应用层" class="headerlink" title="应用层"></a>应用层</h2><p>应用层是网络应用程序和网络协议存放的分层，因特网的应用层包括许多协议，包括http，电子邮件传送协议SMTP、端系统文件上传协议FTP、还有域名解析的DNS协议。应用层协议分布在多个端系统上，一个端系统应用程序与另外一个端系统应用程序交换信息分组。我们把位于应用层的信息分组称为<strong>报文</strong>(message)。</p>
+<h2 id="传输层"><a href="#传输层" class="headerlink" title="传输层"></a>传输层</h2><p>传输层传输应用程序之间的报文。这一层主要有两种传输协议<strong>TCP</strong>和<strong>UDP</strong>。<br><strong>TCP:</strong> 向他的连接程序提供面向连接的服务，它能够控制并确认报文是否到达，并提供了拥塞机制来控制网络传输，因此当网络拥塞时，会抑制其传输速率。<br><strong>UDP:<strong>协议向它的应用程序提供无连接服务。它不具备可靠性的特征，没有流量控制，也没有拥塞控制。<br>我们把传输层的分组称为</strong>报文段。</strong></p>
+<h2 id="网络层"><a href="#网络层" class="headerlink" title="网络层"></a>网络层</h2><p>因特网的网络层负责将称为 <code>数据报(datagram)</code> 的网络分层从一台主机移动到另一台主机。网络层一个非常重要的协议是IP协议，所有具有网络层的因特网组件都必须运行IP协议，<strong>IP协议</strong>是一种网际协议，除了IP协议外，网络层还包括一些其他网际协议和路由选择协议，一般把网络层就称为IP层，由此可知IP协议的重要性。</p>
+<h2 id="链路层"><a href="#链路层" class="headerlink" title="链路层"></a>链路层</h2><p>现在我们有应用程序通信的协议，有了给应用程序提供运输的协议，还有了用于约定发送位置的IP协议，那么如何才能真正的发送数据呢？为了将分组从一个节点（主机或路由器）运输到另一个节点，网络层必须依靠链路层提供服务。链路层的例子包括以太网、wifi和电缆接入的DOCSIS协议，因为数据从源目的地传送通常需要经过几条链路，一个数据包可能被沿途不同的链路层协议处理，我们把链路层的分组成为帧（frame)</p>
+<h2 id="物理层"><a href="#物理层" class="headerlink" title="物理层"></a>物理层</h2><p>虽然链路层的作用是将帧从一个端系统运输到另一个端系统，而物理层的作用是将帧中的一个个 <code>比特</code> 从一个节点运输到另一个节点，物理层的协议仍然使用链路层协议，这些协议与实际的物理传输介质有关，例如，以太网有很多物理层协议：关于双绞铜线、关于同轴电缆、关于光纤等等。</p>
+<h1 id="三、与HTTP相关的协议"><a href="#三、与HTTP相关的协议" class="headerlink" title="三、与HTTP相关的协议"></a>三、与HTTP相关的协议</h1><p>在互联网中，任何协议都不会单独的完成信息交换，虽然http协议属于应用层协议，但是它仍需要其他层次协议的配合来完成信息的交换。</p>
+<h2 id="TCP-IP协议"><a href="#TCP-IP协议" class="headerlink" title="TCP/IP协议"></a>TCP/IP协议</h2><p>TCP/IP 我们一般称之为协议簇， TCP/IP 协议簇中不仅仅只有 TCP 协议和 IP 协议，它是一系列网络通信协议的统称。而其中最核心的两个协议就是 TCP / IP 协议。<br>TCP协议的全程是<strong>传输控制协议</strong>，HTTP使用TCP作为通信协议，因为TCP是一种可靠的协议，能保证数据不丢失。<br>IP协议主要解决通信双方寻址问题。IP协议使用IP地址来标识互联网上的每一台计算机。</p>
+<h2 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h2><p>DNS的全称是域名系统。将域名和IP地址相互映射的一个分布式数据库。</p>
+<h2 id="URI-URL"><a href="#URI-URL" class="headerlink" title="URI/URL"></a>URI/URL</h2><p>URI的全称是<strong>统一资源标识符，</strong>能够唯一的标记互联网上的资源。<br>URL的全称是<strong>统一资源定位符</strong>，也就是我们俗称的网址，实际上是URI的一个子集。**</p>
+<h1 id="四、HTTP请求响应过程（重点理解）"><a href="#四、HTTP请求响应过程（重点理解）" class="headerlink" title="四、HTTP请求响应过程（重点理解）"></a>四、HTTP请求响应过程（重点理解）</h1><h2 id="1-DNS解析、发起TCP连接"><a href="#1-DNS解析、发起TCP连接" class="headerlink" title="1.DNS解析、发起TCP连接"></a>1.DNS解析、发起TCP连接</h2><p>DNS服务器会根据域名的映射，找到域名所在的地址，然后HTTP客户端进程在80端口发起一个到域名所在服务器的TCP连接。</p>
+<h2 id="2-HTTP客户端发送HTTP请求报文"><a href="#2-HTTP客户端发送HTTP请求报文" class="headerlink" title="2.HTTP客户端发送HTTP请求报文"></a>2.HTTP客户端发送HTTP请求报文</h2><p>HTTP客户端向服务器发送HTTP请求报文。</p>
+<h2 id="3-HTTP客户端接收报文、解析，并封装到HTTP响应报文"><a href="#3-HTTP客户端接收报文、解析，并封装到HTTP响应报文" class="headerlink" title="3.HTTP客户端接收报文、解析，并封装到HTTP响应报文"></a>3.HTTP客户端接收报文、解析，并封装到HTTP响应报文</h2><p>HTTP接收报文，解析报文，从存储中检索资源对象，检索出来的对象进行封装到响应报文中，然后向客户端发送。</p>
+<h2 id="4-HTTP服务器通知TCP断开连接"><a href="#4-HTTP服务器通知TCP断开连接" class="headerlink" title="4.HTTP服务器通知TCP断开连接"></a>4.HTTP服务器通知TCP断开连接</h2><p>实际是需要等到客户端接受完响应报文后才会断开</p>
+<h2 id="5-提取报文并检查其中内部对象"><a href="#5-提取报文并检查其中内部对象" class="headerlink" title="5.提取报文并检查其中内部对象"></a>5.提取报文并检查其中内部对象</h2><p>HTTP 客户端接受完响应报文后，TCP 连接会关闭。HTTP 客户端从响应中提取出报文中是一个 HTML 响应文件，并检查该 HTML 文件，然后循环检查报文中其他内部对象。</p>
+<h2 id="6-通过显示器呈现给用户"><a href="#6-通过显示器呈现给用户" class="headerlink" title="6.通过显示器呈现给用户"></a>6.通过显示器呈现给用户</h2><p>检查完成后，HTTP 客户端会把对应的资源通过显示器呈现给用户。</p>
+<h1 id="五、HTTP1-0、HTTP1-1、HTTP2-0的区别（面试可能会问）"><a href="#五、HTTP1-0、HTTP1-1、HTTP2-0的区别（面试可能会问）" class="headerlink" title="五、HTTP1.0、HTTP1.1、HTTP2.0的区别（面试可能会问）"></a>五、HTTP1.0、HTTP1.1、HTTP2.0的区别（面试可能会问）</h1><h2 id="1-HTTP协议基本优化"><a href="#1-HTTP协议基本优化" class="headerlink" title="1.HTTP协议基本优化"></a>1.HTTP协议基本优化</h2><p>影响一个HTTP网络请求的因素主要是两个方面：<strong>带宽</strong>和<strong>延迟</strong><br>带宽在目前来看，我国的网络基础建设已经使得带宽得到极大的提升，所以这个方面我们可以暂且不考虑。<br><strong>延迟</strong>：<br>1）<strong>浏览器阻塞</strong>：浏览器会因为一些原因阻塞请求。浏览器对于同一个域名，同时只能有4个连接，超过浏览器最大连接数限制，后续请求会被阻塞<br>2）<strong>DNS查询</strong>：通过DNS协议去对域名解析来获取ip地址，如果获取较慢，也会造成延迟。通常可以利用DNS缓存结果来达到减少时间的目的<br>3）<strong>建立连接：</strong>HTTP是基于TCO协议的，浏览器最快也要在第三次握手的时候才能捎带HTTP请求报文，达到真正的建立连接，但是这些连接无法复用会导致每次请求都经历三次握手和慢启动，三次握手在高延迟的场景下影响较明显。</p>
+<h2 id="2-HTTP1-0和HTTP1-1的区别"><a href="#2-HTTP1-0和HTTP1-1的区别" class="headerlink" title="2.HTTP1.0和HTTP1.1的区别"></a>2.HTTP1.0和HTTP1.1的区别</h2><p>HTTP1.1是当前使用最为广泛的HTTP协议。主要区别：<br>1）<strong>缓存处理</strong>：HTTP1.1在header中引入了更多的缓存控制策略。（IF-Match、IF-None-Match等）<br>2）<strong>带宽优化</strong>及网络连接的使用：<strong>HTTP1.0</strong>中存在<strong>带宽浪费</strong>的现象，例如Client端只需要某个对象的一部分吗，但是Server把整个对象传输过来，且<strong>不支持断点续传</strong>。<strong>HTTP1.1</strong>在header中引入了range头域，允许只请求资源的某个部分。<br>3）<strong>错误通知</strong>的管理：在HTTP1.1中新增了24个错误状态响应码。如409冲突<br>4）<strong>Host头处理</strong>：HTTP1.0中认定每台server都绑定一个唯一的ip地址，因此请求的URL中没有传递主机名。但随着虚拟机技术的发展，一台服务器上可能存在多个vm,且共享一个IP，HTTP1.1的请求消息和响应消息都支持Host头域<br>5）<strong>长连接</strong>：HTTP1.1中支持长连接，在一个TCP连接上可以传送多个HTTP请求和响应，减少了建立和关闭连接的消耗。在HTTP1.1中默认开启connection:keep-alive。</p>
+<h2 id="3-HTTP-2-0"><a href="#3-HTTP-2-0" class="headerlink" title="3.HTTP 2.0"></a>3.HTTP 2.0</h2><p>HTTP2.0可以说是SPDY的升级版<br>1）<strong>多路复用</strong>（multiplexing）：多个请求共享一个tcp连接的方式，解决了浏览器请求数量限制的问题。<br>2）<strong>请求优先级：</strong>多路复用可能带来一个问题是，在连接共享的基础之上有可能关键请求会被阻塞，HTTP2.0允许给每个请求设置优先级。<br>3）<strong>header压缩</strong><br>4）<strong>服务端推送</strong>：会将css文件或js文件推送给client，当client再次尝试获取静态文件时，可以直接从缓存中获取，不用再发请求了。<br>5)  <strong>支持明文HTTP传输</strong></p>
+<h1 id="六、什么是HTTPS"><a href="#六、什么是HTTPS" class="headerlink" title="六、什么是HTTPS"></a>六、什么是HTTPS</h1><p>HTTP一般是明文传输，很容易被攻击者剽窃重要信息。HTTPS应运而生。<br>HTTPS是以安全为目标的HTTP通道，在HTTP的基础上通过传输加密和身份认证保证传输过程的安全性。<br>HTTPS在HTTP的基础上增加了SSL层。<br><strong>HTTPS=HTTP+SSL</strong><br>**</p>
+<h2 id="深入理解HTTPS工作原理"><a href="#深入理解HTTPS工作原理" class="headerlink" title="深入理解HTTPS工作原理"></a>深入理解HTTPS工作原理</h2><h3 id="1-为什么需要HTTPS？"><a href="#1-为什么需要HTTPS？" class="headerlink" title="1.为什么需要HTTPS？"></a>1.为什么需要HTTPS？</h3><p>HTTP协议存在的问题：<br>1）通信使用铭文，内容可能被窃听<br>2）无法证明报文的完整性，所以可能遭篡改<br>3）不验证通信方的身份，因此有可能遭遇伪装<br>HTTPS协议的优势：<br>1）数据隐私性：内容经过对称加密，每个连接生成一个唯一的加密密钥<br>2）数据完整性：内容传输经过完整性校验<br>3）身份认证：第三方无法伪造服务端（客户端）身份</p>
+<h3 id="2-HTTPS如何解决HTTP的问题？"><a href="#2-HTTPS如何解决HTTP的问题？" class="headerlink" title="2.HTTPS如何解决HTTP的问题？"></a>2.HTTPS如何解决HTTP的问题？</h3><p>HTTPS并非是应用层的一种新协议，只是HTTP部分通信接口用SSL和TLS协议代替而已。</p>
+<img src="/2021/07/07/http-note/4.png" class="">
+<p>HTTPS协议的主要功能基本都依赖于TLS/SSL协议，TLS/SSL的功能实现主要依赖于三类基本算法：<strong>散列函数</strong>、<strong>对称加密</strong>和<strong>非对称加密。</strong><br><strong>非对称加密—实现身份认真和密钥协商</strong><br><strong>对称加密—采用协商的密钥对数据加密</strong><br><strong>散列函数—验证信息的完整性</strong></p>
+<img src="/2021/07/07/http-note/5.png" class="">
+
+<h3 id="3-HTTPS的工作流程-重点"><a href="#3-HTTPS的工作流程-重点" class="headerlink" title="3.HTTPS的工作流程(重点)"></a>3.HTTPS的工作流程(重点)</h3><img src="/2021/07/07/http-note/6.png" class="">
+<p>1.client发起一个HTTPS的请求，根据规定，Client需要连接Server的443端口<br>2.Server把事先配置好的公钥证书（public key certificate）返回给客户端<br>3.Client验证公钥证书：比如是否在有效期内、证书用途是否匹配、它的上一级证书是否有效等，这是一个递归的过程，直到验证到根证书。如果验证通过则继续，否则显示告警信息。<br>4.Client使用伪随机数生成器生成加密所使用的对称密钥，然后用证书的公钥加密这个对称密钥，发给Server<br>5.Server使用自己的私钥（private key）解密这个消息，得到对称密钥。至此，Client和Server双方都持有了相同的对称密钥<br>6.Server使用对称密钥加密明文内容，发给Client<br>7.Client使用对称密钥解密响应的密文，得到明文内容A</p>
+<h3 id="4-HTTP和HTTPS的区别"><a href="#4-HTTP和HTTPS的区别" class="headerlink" title="4.HTTP和HTTPS的区别"></a>4.HTTP和HTTPS的区别</h3><p>HTTPS基于<strong>传输层</strong>，HTTP基于应用层<br>HTTPS需要用到SSL证书，HTTP不用<br>HTTPS比HTTP更加安全，对搜索引擎更加友好</p>
+<h1 id="七、TCP协议"><a href="#七、TCP协议" class="headerlink" title="七、TCP协议"></a>七、TCP协议</h1><p>TCP协议是一个<strong>面向连接的</strong>、<strong>可靠的</strong>、<strong>基于IP</strong>的<strong>传输层协议</strong>。</p>
+<h2 id="1-TCP头部结构和字段介绍"><a href="#1-TCP头部结构和字段介绍" class="headerlink" title="1.TCP头部结构和字段介绍"></a>1.TCP头部结构和字段介绍</h2><img src="/2021/07/07/http-note/7.png" class="">
+<p>从上图可见，TCP协议是封装在IP数据包中的。<br>下图是TCP报文的数据格式：</p>
+<img src="/2021/07/07/http-note/8.png" class="">
+
+<h3 id="1-1-源端口和目的端口"><a href="#1-1-源端口和目的端口" class="headerlink" title="1.1 源端口和目的端口"></a>1.1 源端口和目的端口</h3><p>各占两个字节，这两个值加上<strong>IP首部中</strong>的<strong>源端IP地址</strong>和<strong>目的端IP地址</strong>唯一确定一个TCP连接。有时一个IP地址和一个端口号也成为<strong>socket</strong>。</p>
+<h3 id="1-2-序号（seq）"><a href="#1-2-序号（seq）" class="headerlink" title="1.2 序号（seq）"></a>1.2 序号（seq）</h3><p>占<strong>4个字节</strong>，是本报文段所发送的数据项目组第一个字节的序号。在TCP传送的数据流中，每一个字节都有一个序号。<br>例如，一报文段的序号为300，而且数据共100字节，则下一个报文段的序号就是400；序号是32bit的无符号数，序号到达2^32-1后从0开始。</p>
+<h3 id="1-3-确认序号（ack）"><a href="#1-3-确认序号（ack）" class="headerlink" title="1.3 确认序号（ack）"></a>1.3 确认序号（ack）</h3><p><strong>占4字节</strong>，是期望收到对方下次发送的数据的<strong>第一个字节</strong>的<strong>序号</strong>。也就是期望收到的下一个报文段的<strong>首部</strong>中的<strong>序号</strong>；<br><strong>确认序号应该是上次已成功收到数据字节序号+1。</strong><br><strong>只有ACK标志为1时，确认序号才有效。</strong></p>
+<h3 id="1-4-数据偏移"><a href="#1-4-数据偏移" class="headerlink" title="1.4 数据偏移"></a>1.4 数据偏移</h3><p>占4比特，表示数据开始的地方离TCP段的起始处有多远。实际上就是TCP段首部的长度。由于首部长度不固定，因此数据偏移字段是必要的。数据偏移以32位为长度单位，也就是4个字节，因此<strong>TCP首部的最大长度是60个字节</strong>。即偏移<strong>最大为15个长度单位</strong>=1532位=154字节。</p>
+<h3 id="1-5-保留"><a href="#1-5-保留" class="headerlink" title="1.5 保留"></a>1.5 保留</h3><p>  6比特，供以后应用，现在置为0。</p>
+<h3 id="1-6-6个标志位比特"><a href="#1-6-6个标志位比特" class="headerlink" title="1.6 6个标志位比特"></a>1.6 6个标志位比特</h3><p>① URG：当URG=1时，注解此报文应尽快传送，而不要按本来的列队次序来传送。与“紧急指针”字段共同应用，紧急指针指出在本报文段中的紧急数据的最后一个字节的序号，使接管方可以知道紧急数据共有多长。<br>② ACK：只有当ACK=1时，确认序号字段才有效；<br>③ PSH：当PSH=1时，接收方应该尽快将本报文段立即传送给其应用层。<br>④ RST：当RST=1时，表示出现连接错误，必须释放连接，然后再重建传输连接。复位比特还用来拒绝一个不法的报文段或拒绝打开一个连接；<br>⑤ SYN：SYN=1,ACK=0时表示请求建立一个连接，携带SYN标志的TCP报文段为同步报文段；<br>⑥ FIN：发端完成发送任务。</p>
+<table>
+<thead>
+<tr>
+<th align="left">字段</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">URG</td>
+<td align="left">紧急指针是否有效。为1，表示某一位需要被优先处理</td>
+</tr>
+<tr>
+<td align="left">ACK</td>
+<td align="left">确认号是否有效，一般置为1。</td>
+</tr>
+<tr>
+<td align="left">PSH</td>
+<td align="left">提示接收端应用程序立即从TCP缓冲区把数据读走。</td>
+</tr>
+<tr>
+<td align="left">RST</td>
+<td align="left">对方要求重新建立连接，复位。</td>
+</tr>
+<tr>
+<td align="left">SYN</td>
+<td align="left">请求建立连接，并在其序列号的字段进行序列号的初始值设定。建立连接，设置为1</td>
+</tr>
+<tr>
+<td align="left">FIN</td>
+<td align="left">希望断开连接。</td>
+</tr>
+</tbody></table>
+<h3 id="1-7-窗口"><a href="#1-7-窗口" class="headerlink" title="1.7 窗口"></a>1.7 窗口</h3><p><strong>TCP通过滑动窗口的概念来进行流量控制。</strong><br>设想在发送端发送数据的速度很快而接收端接收速度却很慢的情况下，为了保证数据不丢失，显然需要进行流量控制， 协调好通信双方的工作节奏。所谓<strong>滑动窗口</strong>，可以理解成接收端所能提供的缓冲区大小。<br>TCP利用一个滑动的窗口来告诉发送端对它所发送的数据能提供多大的缓冲区。窗口大小为字节数起始于确认序号字段指明的值（这个值是接收端正期望接收的字节）。窗口大小是一个16bit字段，因而窗口大小最大为65535字节。</p>
+<h3 id="1-8-检验和"><a href="#1-8-检验和" class="headerlink" title="1.8 检验和"></a>1.8 检验和</h3><p>检验和覆盖了整个TCP报文段：TCP首部和数据。这是一个强制性的字段，一定是由发端计算和存储，并由收端进行验证。</p>
+<h3 id="1-9-紧急指针"><a href="#1-9-紧急指针" class="headerlink" title="1.9 紧急指针"></a>1.9 紧急指针</h3><p>只有当URG标志置1时紧急指针才有效。紧急指针是一个正的偏移量，和序号字段中的值相加表示紧急数据最后一个字节的序号。</p>
+<h2 id="2-TCP协议三次握手过程理解"><a href="#2-TCP协议三次握手过程理解" class="headerlink" title="2.TCP协议三次握手过程理解"></a>2.TCP协议三次握手过程理解</h2><p>首先看一个图</p>
+<img src="/2021/07/07/http-note/9.png" class="">
+<p>1）<strong>第一次握手</strong>：client发送syn包到server，并进入SYN_SENT状态，等待server确认；<br>2）<strong>第二次握手</strong>：server收到syn包，向client确认SYN，同时也发送一个SYN包，即SYN+ACK，此时服务器进入<strong>SYN_RECV</strong>状态<br>3）<strong>第三次握手</strong>：客户端收到SYN+ACK包，并向server端发送确认包ACK(ack=y+1)，此包发送完毕，client和server进入<strong>ESTABLISHED</strong>(TCP连接成功)状态。</p>
+<h2 id="3-TCP协议四次挥手过程理解"><a href="#3-TCP协议四次挥手过程理解" class="headerlink" title="3.TCP协议四次挥手过程理解"></a>3.TCP协议四次挥手过程理解</h2><img src="/2021/07/07/http-note/10.png" class="">
+
+<p>1）客户端进程发出连接释放报文，并且停止发送数据。释放数据报文首部，FIN=1，其序列号为seq=u（等于前面已经传送过来的数据的最后一个字节的序号加1），此时，客户端进入<strong>FIN-WAIT-1</strong>（终止等待1）状态。 TCP规定，FIN报文段即使不携带数据，也要消耗一个序号。<br>2）服务器收到连接释放报文，发出确认报文，ACK=1，ack=u+1，并且带上自己的序列号seq=v，此时，服务端就进入了<strong>CLOSE-WAIT</strong>（关闭等待）状态。TCP服务器通知高层的应用进程，客户端向服务器的方向就释放了，这时候处于半关闭状态，即客户端已经没有数据要发送了，但是服务器若发送数据，客户端依然要接受。这个状态还要持续一段时间，也就是整个CLOSE-WAIT状态持续的时间。<br>3）客户端收到服务器的确认请求后，此时，客户端就进入FIN-WAIT-2（终止等待2）状态，等待服务器发送连接释放报文（在这之前还需要接受服务器发送的最后的数据）。<br>4）服务器将最后的数据发送完毕后，就向客户端发送连接释放报文，FIN=1，ack=u+1，由于在半关闭状态，服务器很可能又发送了一些数据，假定此时的序列号为seq=w，此时，服务器就进入了<strong>LAST-ACK</strong>（最后确认）状态，等待客户端的确认。<br>5）客户端收到服务器的连接释放报文后，必须发出确认，ACK=1，ack=w+1，而自己的序列号是seq=u+1，此时，客户端就进入了<strong>TIME-WAIT</strong>（时间等待）状态。<strong>注意此时TCP连接还没有释放</strong>，必须经过2∗∗MSL（<strong>最长报文段寿命</strong>）的时间后，当客户端撤销相应的TCB后，才进入CLOSED状态。<br>6）服务器只要收到了客户端发出的确认，立即进入CLOSED状态。同样，撤销TCB后，就结束了这次的TCP连接。可以看到，服务器结束TCP连接的时间要比客户端早一些。</p>
+<h2 id="4-常见面试题"><a href="#4-常见面试题" class="headerlink" title="4.常见面试题"></a>4.常见面试题</h2><h3 id="1-为什么连接的时候是三次握手，关闭的时候却是四次握手？"><a href="#1-为什么连接的时候是三次握手，关闭的时候却是四次握手？" class="headerlink" title="1.为什么连接的时候是三次握手，关闭的时候却是四次握手？"></a>1.为什么连接的时候是三次握手，关闭的时候却是四次握手？</h3><p>答：因为当Server端收到Client端的SYN连接请求报文后，可以直接发送SYN+ACK报文。其中ACK报文是用来应答的，SYN报文是用来同步的。但是关闭连接时，当Server端收到FIN报文时，很可能并不会立即关闭SOCKET，所以只能先回复一个ACK报文，告诉Client端，”你发的FIN报文我收到了”。只有等到我Server端所有的报文都发送完了，我才能发送FIN报文，因此不能一起发送。故需要四步握手。</p>
+<h3 id="2-为什么TIME-WAIT状态需要经过2MSL-最大报文段生存时间-才能返回到CLOSE状态？"><a href="#2-为什么TIME-WAIT状态需要经过2MSL-最大报文段生存时间-才能返回到CLOSE状态？" class="headerlink" title="2.为什么TIME_WAIT状态需要经过2MSL(最大报文段生存时间)才能返回到CLOSE状态？"></a>2.为什么TIME_WAIT状态需要经过2MSL(最大报文段生存时间)才能返回到CLOSE状态？</h3><p>答：虽然按道理，四个报文都发送完毕，我们可以直接进入CLOSE状态了，但是我们必须假象网络是不可靠的，有可以最后一个ACK丢失。所以TIME_WAIT状态就是用来重发可能丢失的ACK报文。在Client发送出最后的ACK回复，但该ACK可能丢失。Server如果没有收到ACK，将不断重复发送FIN片段。所以Client不能立即关闭，它必须确认Server接收到了该ACK。Client会在发送出ACK之后进入到TIME_WAIT状态。Client会设置一个计时器，等待2MSL的时间。如果在该时间内再次收到FIN，那么Client会重发ACK并再次等待2MSL。所谓的2MSL是两倍的MSL(Maximum Segment Lifetime)。MSL指一个片段在网络中最大的存活时间，2MSL就是一个发送和一个回复所需的最大时间。如果直到2MSL，Client都没有再次收到FIN，那么Client推断ACK已经被成功接收，则结束TCP连接。</p>
+<h3 id="3-为什么不能用两次握手进行连接？"><a href="#3-为什么不能用两次握手进行连接？" class="headerlink" title="3.为什么不能用两次握手进行连接？"></a>3.为什么不能用两次握手进行连接？</h3><p>答：3次握手完成两个重要的功能，既要双方做好发送数据的准备工作(双方都知道彼此已准备好)，也要允许双方就初始序列号进行协商，这个序列号在握手过程中被发送和确认。</p>
+<h3 id="4-如果已经建立了连接，但是客户端突然出现故障了怎么办？"><a href="#4-如果已经建立了连接，但是客户端突然出现故障了怎么办？" class="headerlink" title="4.如果已经建立了连接，但是客户端突然出现故障了怎么办？"></a>4.如果已经建立了连接，但是客户端突然出现故障了怎么办？</h3><p>答：TCP还设有一个保活计时器，显然，客户端如果出现故障，服务器不能一直等下去，白白浪费资源。服务器每收到一次客户端的请求后都会重新复位这个计时器，时间通常是设置为2小时，若两小时还没有收到客户端的任何数据，服务器就会发送一个探测报文段，以后每隔75秒钟发送一次。若一连发送10个探测报文仍然没反应，服务器就认为客户端出了故障，接着就关闭连接。</p>
+<h2 id="5-TCP流量控制（滑动窗口协议）"><a href="#5-TCP流量控制（滑动窗口协议）" class="headerlink" title="5.TCP流量控制（滑动窗口协议）"></a>5.TCP流量控制（滑动窗口协议）</h2><p>TCP流量控制主要是针对接收端的处理速度不如发送端发送速度快的问题，消除发送方使接收方缓存溢出的可能性。<br>TCP流量控制主要使用滑动窗口协议，<strong>滑动窗口是client端使用的窗口大小，用来告诉server端client的缓存大小，以此可以控制发送端发送数据的大小，从而达到流量控制的目的</strong>。<br>这个窗口大小就是我们一次传输几个数据。对所有数据帧按顺序赋予编号，发送方在发送过程中始终保持着一个发送窗口，只有落在发送窗口内的帧才允许被发送；<br>同时接收方也维持着一个接收窗口，只有落在接收窗口内的帧才允许接收。这样通过调整发送方窗口和接收方窗口的大小可以实现流量控制。<br>我们可以通过下图来分析:</p>
+<img src="/2021/07/07/http-note/11.png" class="">
+
+<p>1)发送方接收到了报文 ack=33,win=10，由报文可知，对方收到了33号前的数据，现在期望接收[33,43)号数据。那我们开始发送[33,43)。<br>2）[33, 43) 号的数据你是已经发送了,但接受方并没有接受到[36,37]数据。所以接收方发送回对报文段 A 的确认：ack = 35, win = 10。<br>3）发送方收到了 ack = 35, win = 10，对方期望接收 [35, 45) 号数据。那么发送方在发送[35, 45) 。<br>这里面需要思考一个问题？<br>     第一步发送了[33, 43),如果这次发送[35, 45),那中间重叠部分不是发送了两次,所以这里要思考: 是全部重新发送还是只发送接收端没有收到的数据，如果全部发送，那么重复发送的数据接收端怎么处理。这个下面快速重传会讲。<br>4）接收方接收到了报文段 [35, 41)，接收方发送：ack = 41, win = 10. （这是一个累积确认）<br>5、发送方收到了 ack = 41, win = 10，对方期望接收 [41, 51) 号数据。<br>6、…….<br> 这样一直传输数据,直到数据发送完成。这么一来就保证数据数据的可靠性,因为如果某数据没有获取到,那么ack永远不会跳过它。</p>
+<h2 id="6-TCP拥塞控制"><a href="#6-TCP拥塞控制" class="headerlink" title="6.TCP拥塞控制"></a>6.TCP拥塞控制</h2><h3 id="1-什么是拥塞控制？"><a href="#1-什么是拥塞控制？" class="headerlink" title="1.什么是拥塞控制？"></a>1.什么是拥塞控制？</h3><p>     <strong>流量控制</strong>是通过<strong>接收方</strong>来控制流量的一种方式；而<strong>拥塞控制</strong>则是通过<strong>发送方</strong>来控制流量的一种方式。<br>TCP发送方可能因为IP网络的拥塞而被遏制，TCP拥塞控制就是为了解决这个问题（注意和TCP流量控制的区别）。<br>TCP拥塞控制的几种方法：<br>1）<strong>慢启动</strong><br>2）<strong>拥塞避免</strong><br>3）<strong>快重传</strong><br>4）<strong>快恢复</strong></p>
+<h3 id="2-什么是拥塞窗口？"><a href="#2-什么是拥塞窗口？" class="headerlink" title="2.什么是拥塞窗口？"></a>2.什么是拥塞窗口？</h3><p>拥塞窗口：发送方维持一个叫做拥塞窗口cwnd的状态变量。拥塞窗口的大小取决于网络的拥塞程度，并且动态变化。<br>说明: <strong>发送方取拥塞窗口与滑动窗口的最小值作为发送的上限。</strong><br>发送方控制拥塞窗口的原则是：只要网络没有出现拥塞，拥塞窗口就增大一些，以便把更多的分组发送出去。但只要网络出现拥塞，拥塞窗口就减小一些，以减少<br>注入到网络中的分组数。</p>
+<h3 id="3-慢启动"><a href="#3-慢启动" class="headerlink" title="3.慢启动"></a>3.慢启动</h3><p>TCP在连接过程的三次握手完成后，开始传送数据，并不是一开始向网络通道中发送大量的数据包。因为假如网络出现问题，很多这样的大包会积攒在路由器上，很容易导致网络中路由器缓存空间耗尽，从而发生拥塞。<br>因此，TCP协议规定，新建立的连接不能一开始就发送大尺寸的数据包。只能从小尺寸的包开始发送。在发送和数据被对方确认的过程中去计算对方的接受速度，来逐步增加每次发送的数据量（<strong>最后达到一个稳定的值，进入告诉传输阶段。相应的，慢启动过程中，TCP通道处在低速传输的阶段</strong>）<br>以上就是慢启动策略。用一个简单的原理图来描述一下：</p>
+<img src="/2021/07/07/http-note/12.png" class="">
+<p><strong>拓展：慢启动带来的性能问题如何解决？</strong><br>在迁移海量小文件的需求下，我们不能使用“对每个文件都采用独立的TCP连接来传输（循环使用scp拷贝）“这样的策略，它会使每个文件的传输都处于在一个独立TCP的慢启动。<br>解决方法很简单：<strong>尽量把大量小文件放在一个TCP连接中排队传输</strong>。起初的一两个文件处于慢启动过程传输，后续的文件传输全部处于高速通道中传输，用这样的方式来减少发包的数目，进而降低时间消耗。同样，实际上这种传输策略带来的性能提升的功劳不仅仅归于避免慢启动，<strong>事实上也避免了大量的3次握手和四次握手</strong>，这个对海量小文件传输的性能消耗也非常致命。</p>
+<h3 id="4-拥塞避免"><a href="#4-拥塞避免" class="headerlink" title="4.拥塞避免"></a>4.拥塞避免</h3><p>慢启动中拥塞窗口的cwnd值,开始是1,接下开是指数型增涨的。1、2、4、8、16…..这样涨太快了吧。那么就有了堵塞避免。<br>cwnd不能一直这样无限增长下去，一定需要某个限制。TCP使用了一个叫<strong>慢启动门限(ssthresh)<strong>的变量，一旦</strong>cwnd&gt;=ssthresh</strong>（大多数TCP的实现，通常大小都是（65536），慢启动过程结束，拥塞避免阶段开始；<br>拥塞避免：cwnd的值不再指数级往上升，开始加法增加。此时当窗口中所有的报文段都被确认时，cwnd的大小加1，cwnd的值就随着RTT开始线性增加，这样就可以避免增长过快导致网络拥塞，慢慢的增加调整到网络的最佳值。(它逻辑很简单就是到一定值后,cwnd不在是指数增长,而是+1增长。这样显然慢多了）。<br>非ECN环境下的拥塞判断，发送方RTO超时，重传了一个报文段，它的逻辑如下：<br>      1）把ssthresh降低为cwnd值的一半。<br>      2）把cwnd重新设置为1。<br>      3）重新进入慢启动过程。</p>
+<img src="/2021/07/07/http-note/13.png" class="">
+
+<h3 id="5-快速重传"><a href="#5-快速重传" class="headerlink" title="5.快速重传"></a>5.快速重传</h3><p><strong>TCP要保证所有的数据包都可以到达，所以，必需要有重传机制。</strong><br>接收端给发送端的Ack确认只会确认最后一个连续的包，比如，发送端发了1,2,3,4,5一共五份数据，接收端收到了1，2，于是回ack 3，然后收到了4（注意此时3没收到）<br>此时的TCP会怎么办？我们要知道，因为正如前面所说的，SeqNum和Ack是以字节数为单位，所以ack的时候，不能跳着确认，只能确认最大的连续收到的包，不然，发送端就以为之前的都收到了。<br>1）<strong>超时重传机制</strong><br>一种是不回ack，死等3，当发送方发现收不到3的ack超时后，会重传3。一旦接收方收到3后，会ack 回 4——意味着3和4都收到了。<br>但是，这种方式会有比较严重的问题，那就是因为要死等3，所以会导致4和5即便已经收到了，而发送方也完全不知道发生了什么事，因为没有收到Ack，所以，发送方可能会悲观地认为也丢了，所以有可能也会导致4和5的重传。<br>对此有两种选择：<br>① 一种是仅重传timeout的包。也就是第3份数据。<br>② 另一种是重传timeout后所有的数据，也就是第3，4，5这三份数据。<br>这两种方式有好也有不好。第一种会节省带宽，但是慢，第二种会快一点，但是会浪费带宽，也可能会有无用功。但总体来说都不好。因为都在等timeout，timeout可能会很长。<br>2）<strong>快速重传机制</strong><br>于是，TCP引入了一种叫<strong>Fast Retransmit</strong>的算法，不以时间驱动，而以数据驱动重传。也就是说，如果，包没有连续到达，就ack最后那个可能被丢了的包，如果发送方连续收到3次相同的ack，就重传。Fast Retransmit的好处是不用等timeout了再重传,而是只是三次相同的ack就重传。<br>比如：如果发送方发出了1，2，3，4，5份数据，第一份先到送了，于是就ack回2，结果2因为某些原因没收到，3到达了，于是还是ack回2，后面的4和5都到了，但是还是ack回2因为2还是没有收到，于是发送端收到了三个ack=2的确认，知道了2还没有到，于是就马上重转2。然后，接收端收到了2，此时因为3，4，5都收到了，于是ack回6。</p>
+<img src="/2021/07/07/http-note/14.png" class="">]]></content>
+      <categories>
+        <category>技术笔记</category>
+      </categories>
+      <tags>
+        <tag>网络</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>2021-05-01 宜昌游记</title>
+    <url>/2021/06/05/yichang/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script>
+    <div id="aplayer-SNFkMhGi" class="aplayer aplayer-tag-marker meting-tag-marker"
+         data-id="569214247" data-server="netease" data-type="song" data-mode="circulation" data-autoplay="true" data-mutex="true" data-listmaxheight="340px" data-preload="auto" data-theme="#ad7a86"
+    ></div>
+<blockquote>
+<p>2020年疫情之后就没怎么出去旅行过，这次旅行也是期待了很久。<br>出发之前想了很多地方，要么担心疫情要么受时间限制。<br>有一天，ZoSai说，我想喝武汉的排骨藕汤了，我说，走，咱们出发！</p>
+</blockquote>
+<h2 id="Day1-–武汉"><a href="#Day1-–武汉" class="headerlink" title="Day1 –武汉"></a>Day1 –武汉</h2><p>5月1号凌晨我们出发啦！经过5个小时驾车，我们到达了第一站，信阳师范学院，来接着妹妹，做个短暂的休息。</p>
+<img src="/2021/06/05/yichang/xinyang1.jpeg" class="" title="信阳的早晨">
+<img src="/2021/06/05/yichang/xinyang2.jpeg" class="" title="信阳的早晨">
+
+<p>短暂休息过后继续出发，五一假期果然是很堵车啊，到了武汉都中午啦，直奔亢龙太子酒轩，有点遗憾的是排骨藕汤因为藕过了季节，都没有啦。带着但是来都来了，带着遗憾还是在他家吃了</p>
+<img src="/2021/06/05/yichang/chide.jpeg" class="" title="各种吃吃吃">
+
+<p>计划在武汉休整一天，然后去宜昌转转，于是下午就出门啦，去江边逛一逛，去吃一些小吃</p>
+<img src="/2021/06/05/yichang/shapaozi.jpeg" class="" title="傻狍子-ZoSai">
+<img src="/2021/06/05/yichang/qinglvzhuang.jpeg" class="" title="武汉地铁站">
+<p>不知不觉天黑啦，我们也来到了武汉江滩</p>
+<img src="/2021/06/05/yichang/wuhanjiangtan-1.jpeg" class="" title="江滩建筑">
+
+<h2 id="Day2-–宜昌"><a href="#Day2-–宜昌" class="headerlink" title="Day2 –宜昌"></a>Day2 –宜昌</h2><h3 id="江边散步"><a href="#江边散步" class="headerlink" title="江边散步"></a>江边散步</h3><p>第二天一早就从武汉出发去往了宜昌，宜昌是一个生活节奏很慢的城市，在宜昌待的三天整个人都慢了下来，非常舒服</p>
+<img src="/2021/06/05/yichang/jiangbian-1.jpeg" class="" title="宜昌江滩">
+<p>江滩还用无人机拍了一小段视频~</p>
+
+<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
+<iframe src="//player.bilibili.com/player.html?aid=205420506&bvid=BV1Bh411m7AL&cid=335880504&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" ></iframe></div>
+
+
+<h3 id="把把烧"><a href="#把把烧" class="headerlink" title="把把烧"></a>把把烧</h3><p>宜昌非常有名的小吃把把烧 配上夺命大乌苏，绝绝子<br>对了，宜昌的萝卜饺子也特别好吃，还有什么鱼鱼，可惜光顾着吃了，忘记拍照啦</p>
+<img src="/2021/06/05/yichang/babashao.jpeg" class="" title="把把烧">
+
+<h2 id="Day3-–三峡人家"><a href="#Day3-–三峡人家" class="headerlink" title="Day3 –三峡人家"></a>Day3 –三峡人家</h2><p>第三天我们去了宜昌非常有名的三峡人家风景区，三峡人家位于长江夷陵峡上游，去的时候需要坐摆渡船，逆流而上。</p>
+<img src="/2021/06/05/yichang/sanxiarenjia-1.jpeg" class="" title="去景区的船上，阴雨绵绵">
+<img src="/2021/06/05/yichang/sanxiarenjia-2.jpeg" class="" title="景区码头">
+<p>此情此景让我想到一首诗句<br>两岸猿声啼不住 轻舟已过万重山</p>
+<img src="/2021/06/05/yichang/sanxiarenjia-3.jpeg" class="" title="一叶扁舟">
+
+<p>进入景区内部，天气阴转晴，风景拍出来也更加美丽</p>
+<img src="/2021/06/05/yichang/sanxiarenjia4.jpeg" class="" title="三峡人家">
+<img src="/2021/06/05/yichang/yichang-4.jpeg" class="" title="三峡人家">
+<img src="/2021/06/05/yichang/yichang-5.jpeg" class="" title="三峡人家">
+<img src="/2021/06/05/yichang/yichang-6.jpeg" class="" title="三峡人家">
+<p>游记的最后，用一个小短片总结一下吧~期待我们的下次旅行</p>
+
+<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
+<iframe src="//player.bilibili.com/player.html?aid=592908430&bvid=BV1pq4y127BX&cid=479280797&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" ></iframe></div>
+]]></content>
+      <categories>
+        <category>游记</category>
+      </categories>
+      <tags>
+        <tag>旅行</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>数据结构学习笔记-链表</title>
     <url>/2021/06/05/DataStructureNote/</url>
     <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>&emsp;&emsp;过完年后，技术栈逐渐由java转为了go语言，面对一个新的语言，希望能从数据结构和一些算法题入手从而加深掌握的程度，在此推荐一下这位大神的总结,个人感觉写的非常好</p>
@@ -288,760 +1042,6 @@
         <tag>读书笔记</tag>
         <tag>数据结构</tag>
         <tag>链表</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>关于我</title>
-    <url>/2021/02/06/AboutMe/</url>
-    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="👨🏻‍💻-ZoXu"><a href="#👨🏻‍💻-ZoXu" class="headerlink" title="👨🏻‍💻 ZoXu"></a><center>👨🏻‍💻 ZoXu</center></h1><p> <strong><center>A Developer,Live in Beijing,China</center></strong></p>
-<img src="/images/AboutMe.jpeg" width="500" alt="ZoXu" style="border-radius:50%">
-
-<center>姓名：Zoxu</center>
-<center>现居：北京市昌平区</center>
-<center>家乡：河南省郑州市</center>
-<center>就职于：JDCloud</center>
-<center>email: zhouxu0928@126.com</center>
-<center>WeChat: zhouxu_0928</center>
-<center>爱好：旅行，机车，摄影，健身</center>
-<center>技术栈：Java、Golang、Kubernetes</center>]]></content>
-      <categories>
-        <category>我和她</category>
-      </categories>
-      <tags>
-        <tag>关于我</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>新职场</title>
-    <url>/2021/12/25/MoveToJDTBuilding/</url>
-    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><blockquote>
-<p>这周公司搬到了新的办公楼–京东科技大厦。<br>3年前的冬天，入职了京东，来到了北辰世纪中心，一转眼就3年过去了，数不清在北辰熬了多少个通宵😂，说实话挺舍不得这里的。<br>但是看到了新的办公楼，还是很开心啊。毕竟来到了中关村，大牛云集的地方，新的办公楼基础设施也更完善一些，可以每天晚上去撸铁啦。</p>
-</blockquote>
-<p>先来看看外景吧</p>
-<img src="/2021/12/25/MoveToJDTBuilding/waijing.jpeg" class="" title="京东科技大厦">
-
-<p>早上参加了剪裁仪式，见到了公司的各位大佬</p>
-<img src="/2021/12/25/MoveToJDTBuilding/wushizi.jpeg" class="" title="剪裁仪式">
-
-<p>然后吃了蛋糕呀，虽然到我手里就剩了渣渣了，不过还是沾沾喜气吧</p>
-<img src="/2021/12/25/MoveToJDTBuilding/chidangao.jpeg" class="" title="大大的蛋糕">
-
-<p>上楼收拾一下工位，工位旁边就是大大的落地窗，可以俯瞰中关村，比之前宽敞多啦</p>
-<img src="/2021/12/25/MoveToJDTBuilding/bangongzhuo.jpeg" class="" title="工位">
-
-<p>中午和同事一起去了新食堂，人山人海，不过新的食堂种类倒是挺多，味道也不错，中午给自己安排了个19元自选菜😂</p>
-<img src="/2021/12/25/MoveToJDTBuilding/diyidunwucan.jpeg" class="" title="午餐">
-
-<p>到了下午部门竟然给我们发了新的书包和衣服，瞬间有了一种开学第一天的感觉，虽然很…程序员吧，但是有总比没有强</p>
-<img src="/2021/12/25/MoveToJDTBuilding/xinshubao.jpeg" class="" title="一眼就能看出来是程序员的书包">
-<img src="/2021/12/25/MoveToJDTBuilding/xinyifu.jpeg" class="" title="带着公司logo的衣服">
-
-<p>就介绍到这吧，新的职场新的开始，马上也要迎来新的一年，继续努力吧小周！！💪🏻</p>
-]]></content>
-      <categories>
-        <category>小周的北漂生活</category>
-      </categories>
-      <tags>
-        <tag>北漂生活</tag>
-        <tag>职场碎碎念</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>我求婚啦</title>
-    <url>/2021/10/05/MarryHer/</url>
-    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script>
-    <div id="aplayer-JTsqQeFE" class="aplayer aplayer-tag-marker meting-tag-marker"
-         data-id="29539085" data-server="netease" data-type="song" data-mode="circulation" data-autoplay="true" data-mutex="true" data-listmaxheight="340px" data-preload="auto" data-theme="#ad7a86"
-    ></div>
-<blockquote>
-<center>你是我突如其来的遇见</center>
-<center> 和始料未及的欢喜</center>
-<center>❤️</center>
-</blockquote>
-<p>&emsp;&emsp;从6月份开始，我脑袋里有了一个念头，我要给她一个很正式很用心的求婚仪式。<br>第1️⃣个idea:<br>&emsp;&emsp;电影院包场，请朋友来冒充观众，中间播放我准备的视频，但是由于太多的不确定性以及中间的疫情，计划泡汤啦😭<br>第2️⃣个idea:<br>&emsp;&emsp;密室逃脱中最后通关的场景是我的求婚。在试探性的询问中得知她并不喜欢这种的带点“惊吓的形式”。好吧也只能pass了😭<br>第3️⃣个idea:<br>&emsp;&emsp;虽然很俗但是很有纪念意义，请往下看</p>
-<center>初见-->永远</center>
-
-<p>&emsp;&emsp;2019年的9月30日，我们第一次见面，去吃了张福记。记得当时我紧张的不停冒汗，也不敢主动牵手。那天，我们正式在一起了。<br>&emsp;&emsp;2021年的9月30日，还是在她下班后，还是在张福记，还是那个位置。转眼间，我们携手走过了整整两年的时间，我希望她能答应我的求婚，和我一起度过余生。</p>
-<p>&emsp;&emsp;那晚吃的菜，好吃的东坡肉。</p>
-<img src="/2021/10/05/MarryHer/chifan.png" class="" title="张福记">
-<p>&emsp;&emsp;准备的玫瑰花。</p>
-<img src="/2021/10/05/MarryHer/flower.png" class="" title="玫瑰花">
-<p>&emsp;&emsp;求婚蛋糕。</p>
-<img src="/2021/10/05/MarryHer/cake.png" class="" title="求婚蛋糕">
-
-<p>&emsp;&emsp;现场布置的小插曲。字母A的灯不亮啦，赶紧找了电工师傅维修，还好虚惊一场😤</p>
-<img src="/2021/10/05/MarryHer/xiaochaqu.png" class="" title="现场布置小插曲">
-
-<p>&emsp;&emsp;这是最终的求婚现场。</p>
-<img src="/2021/10/05/MarryHer/xianchang.png" class="" title="求婚现场">
-
-<p>&emsp;&emsp;我单膝下跪，问她：你愿意嫁给我吗？<br>&emsp;&emsp;这是最终的求婚现场。</p>
-<img src="/2021/10/05/MarryHer/qiuhun.png" class="" title="求婚啦">
-
-<p>&emsp;&emsp;成功啦~为她戴上了blingbling的钻戒💍</p>
-<img src="/2021/10/05/MarryHer/success.png" class="" title="求婚成功">
-
-<p>&emsp;&emsp;最后，附上我准备的视频~</p>
-<center>《一生中最期待的电影》</center>
-
-<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
-<iframe src="//player.bilibili.com/player.html?aid=677886680&bvid=BV1pm4y1X73R&cid=479101459&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" ></iframe></div>
-]]></content>
-      <categories>
-        <category>我和她</category>
-      </categories>
-      <tags>
-        <tag>我和她</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Golang调度器GMP模型-学习笔记</title>
-    <url>/2022/01/11/Golang-GMP/</url>
-    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>    首先要了解一下<code>并发（concurrency）</code>和<code>并行（parallesim）</code>的区别。</p>
-<ul>
-<li><p>并发：逻辑上具有处理多个同时性任务的能力</p>
-</li>
-<li><p>并行：物理上同一时刻执行多个并发任务</p>
-</li>
-</ul>
-<p>    通常所说的<code>并发编程</code>，也就是说它允许多个任务同时执行。但实际上并不是在同一时刻被执行。在单核处理器上，通过多线程共享CPU时间片串行执行。</p>
-<p>    <code>并行</code>则依赖于多核处理器等物理资源，让多个任务可以并行执行（并发且并行）。</p>
-<p>     <img src="/2022/01/11/Golang-GMP/1.png" class="" title="多线程&#x2F;多进程操作系统"></p>
-<h1 id="一、Golang调度器的由来"><a href="#一、Golang调度器的由来" class="headerlink" title="一、Golang调度器的由来"></a>一、Golang调度器的由来</h1><p>    前言中说道，多线程\多进程的操作系统中，解决了阻塞的问题。但是新的问题又出现了，进程拥有太多的资源，进程的创建、切换、销毁都会占用很长的时间。如果进程过多，CPU很大的一部分都用来进行进程调度了。</p>
-<img src="/2022/01/11/Golang-GMP/1.png" class="" title="cpu浪费时间成本">
-
-<h2 id="1-协程来提高CPU利用率"><a href="#1-协程来提高CPU利用率" class="headerlink" title="1.协程来提高CPU利用率"></a>1.协程来提高CPU利用率</h2><p>    多线程、多进程已经提高了系统的并发能力，但是在当今互联网高并发场景下，为每个任务都创建一个线程是不现实的，会消耗大量的内存。</p>
-<p>    <strong>引入<code>内核态</code>线程和<code>用户态</code>线程</strong></p>
-<blockquote>
-<p> 一个“用户态线程”必须要绑定一个“内核态线程”，但是CPU并不知道有“用户态线程”的存在。它只知道它运行的是一个“内核态线程”。</p>
-</blockquote>
-<p>        <img src="/2022/01/11/Golang-GMP/3.png" class=""></p>
-<p>    再去细化分类一下，内核线程依然叫做<code>线程(thread)</code>，用户线程叫做<code>协程(co-routine)</code></p>
-<p>      <img src="/2022/01/11/Golang-GMP/4.png" class=""></p>
-<h2 id="2-线程-thread-和协程-co-routine-的3种关系"><a href="#2-线程-thread-和协程-co-routine-的3种关系" class="headerlink" title="2.线程(thread)和协程(co-routine)的3种关系"></a>2.线程(thread)和协程(co-routine)的3种关系</h2><h3 id="1）N-1-关系"><a href="#1）N-1-关系" class="headerlink" title="1）N:1 关系"></a>1）N:1 关系</h3><p>    即<code>N个协程绑定1个线程</code>，优点是<strong>协程在用户态线程即完成切换，不会陷入内核态，切换轻量且快速</strong>。缺点：1个进程的所有协程都绑定在1个线程上。一旦某个协程阻塞，造成线程阻塞，本进程的其他协程都无法进行了，根本没有并发能力。</p>
-<img src="/2022/01/11/Golang-GMP/5.png" class="" title="N:1关系">
-
-<h3 id="2）1-1-关系"><a href="#2）1-1-关系" class="headerlink" title="2）1:1 关系"></a>2）1:1 关系</h3><p>    即<code>1 个协程绑定 1 个线程</code>。</p>
-<p>    优点：最容易实现</p>
-<p>    缺点：协程的创建、删除和切换的代价都由CPU完成，略显昂贵。</p>
-<h3 id="3-M-N-关系"><a href="#3-M-N-关系" class="headerlink" title="3)  M:N 关系"></a>3)  M:N 关系</h3><p>    <code>M 个协程绑定 N 个线程</code> ，克服了以上两种模型的缺点，但实现起来最为复杂</p>
-<img src="/2022/01/11/Golang-GMP/6.png" class="" title="M:N关系">
-
-<p>    协程跟线程是有区别的。</p>
-<p>    线程由CPU调度，是抢占式的。</p>
-<p>    <strong>协程由用户态调度，是协作式的，一个协程让出CPU后，才执行下一个协程。</strong></p>
-<h2 id="3-Go语言的协程goroutine"><a href="#3-Go语言的协程goroutine" class="headerlink" title="3.Go语言的协程goroutine"></a>3.Go语言的协程goroutine</h2><p>    <strong>Go为了提供更容易使用的并发方法，使用了goroutine和channel</strong>。</p>
-<p>    goroutine来自协程的概念，让一组可复用的函数运行在一组线程之上。即使有协程阻塞，该线程的其他协程也可以被`runtime``调度，转移到其他可运行的线程上。</p>
-<p>    Go中，协程被称为goroutine，它非常轻量，一个goroutine只占几KB，并且这几KB就足够goroutine运行完，这就能在有限的内存空前内支持大量goroutine，支持了更多的并发。虽然一个goroutine的栈只占几KB，但实际是可伸缩的，如果需要更多内容，`runtime``会自动为goroutine分配。</p>
-<p>    goroutine特点：</p>
-<ul>
-<li><p>占用内存更小</p>
-</li>
-<li><p>调度更灵活</p>
-</li>
-</ul>
-<h1 id="二、被废弃的goroutine调度器-GM模型"><a href="#二、被废弃的goroutine调度器-GM模型" class="headerlink" title="二、被废弃的goroutine调度器-GM模型"></a>二、被废弃的goroutine调度器-GM模型</h1><p>在Go1.1之前Go的调度模型其实是GM模型，现在使用的版本是2012年重新设计的。废弃GM模型的原因是调度器性能存在问题。</p>
-<h2 id="1-GM模型实现原理"><a href="#1-GM模型实现原理" class="headerlink" title="1.GM模型实现原理"></a>1.GM模型实现原理</h2><blockquote>
-<p>大部分文章都是会用 G 来表示 Goroutine，用 M 来表示线程，那么我们也会用这种表达的对应关系。</p>
-</blockquote>
-<p>   <img src="/2022/01/11/Golang-GMP/7.png" class="" title="对应关系"></p>
-<p>用一个动图来展示一下GM模型的工作原理</p>
-<p>   <img src="/2022/01/11/Golang-GMP/GM-gif.gif" class="G" title="GM模型工作原理"></p>
-<h2 id="2-源码解读"><a href="#2-源码解读" class="headerlink" title="2.源码解读"></a>2.源码解读</h2><p>看一下Go1.0.1的调度器源码的核心关键步骤</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go">static void
-<span class="token function">schedule</span><span class="token punctuation">(</span>G <span class="token operator">*</span>gp<span class="token punctuation">)</span>
-<span class="token punctuation">&#123;</span>
- <span class="token operator">...</span>
- <span class="token function">schedlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
- <span class="token keyword">if</span><span class="token punctuation">(</span>gp <span class="token operator">!=</span> <span class="token boolean">nil</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-  <span class="token operator">...</span>
-  <span class="token keyword">switch</span><span class="token punctuation">(</span>gp<span class="token operator">-</span><span class="token operator">></span>status<span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
-  <span class="token keyword">case</span> Grunnable<span class="token punctuation">:</span>
-  <span class="token keyword">case</span> Gdead<span class="token punctuation">:</span>
-   <span class="token comment">// Shouldn't have been running!</span>
-   runtime·<span class="token function">throw</span><span class="token punctuation">(</span><span class="token string">"bad gp->status in sched"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">case</span> Grunning<span class="token punctuation">:</span>
-   gp<span class="token operator">-</span><span class="token operator">></span>status <span class="token operator">=</span> Grunnable<span class="token punctuation">;</span>
-   <span class="token function">gput</span><span class="token punctuation">(</span>gp<span class="token punctuation">)</span><span class="token punctuation">;</span>
-   <span class="token keyword">break</span><span class="token punctuation">;</span>
-  <span class="token punctuation">&#125;</span>
-
- gp <span class="token operator">=</span> <span class="token function">nextgandunlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
- gp<span class="token operator">-</span><span class="token operator">></span>readyonstop <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
- gp<span class="token operator">-</span><span class="token operator">></span>status <span class="token operator">=</span> Grunning<span class="token punctuation">;</span>
- m<span class="token operator">-</span><span class="token operator">></span>curg <span class="token operator">=</span> gp<span class="token punctuation">;</span>
- gp<span class="token operator">-</span><span class="token operator">></span>m <span class="token operator">=</span> m<span class="token punctuation">;</span>
- <span class="token operator">...</span>
- runtime·<span class="token function">gogo</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>gp<span class="token operator">-</span><span class="token operator">></span>sched<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>分析一下过程：</p>
-<ul>
-<li><p>调用<code>schedlock()</code>方法获取全局锁</p>
-</li>
-<li><p>获取全局锁成功后，将当前Goroutine状态从Running（正在被调度）改为Runnable（可以被调度）</p>
-</li>
-<li><p>调用<code>gput</code>方法来保存当前Goroutine的运行状态等信息</p>
-</li>
-<li><p>调用<code>nextgandunlock</code>方法来寻找下一个可运行的Goroutine，并且释放全局锁给其他调度使用</p>
-</li>
-<li><p>获取到下一个待运行的Goroutine后，将其状态修改为Running。</p>
-</li>
-<li><p>调用<code>runtime.gogo</code>方法，将刚刚所获取到的下一个待执行的Goroutine运行起来，进入下一轮调度。</p>
-</li>
-</ul>
-<h2 id="3-GM模型的缺点"><a href="#3-GM模型的缺点" class="headerlink" title="3.GM模型的缺点"></a>3.GM模型的缺点</h2><ul>
-<li><p>创建、销毁、调度G都需要每个M获取锁，这就形成了激烈的锁竞争。</p>
-</li>
-<li><p>M转移G会造成延迟和额外的系统负载。比如当G中包含创建新协程G2，为了继续执行G，需要把G2交给M2执行，也就造成了很差的局部性。因为G和G2是相关的，最好放在M上执行，而不是其他M。</p>
-</li>
-<li><p>系统调用（CPU在M之间的切换）导致频繁的线程阻塞和取消阻塞操作增加了系统开销。</p>
-</li>
-</ul>
-<h1 id="三、Goroutine调度器的GMP模型的设计思想"><a href="#三、Goroutine调度器的GMP模型的设计思想" class="headerlink" title="三、Goroutine调度器的GMP模型的设计思想"></a>三、Goroutine调度器的GMP模型的设计思想</h1><p>面对之前调度器的问题，Go设计了新的调度器。</p>
-<p>在新的调度器中，除了M(thread)和G(goroutine)，又引进了P(Processor)</p>
-<p>  <img src="/2022/01/11/Golang-GMP/8.png" class="" title="对应关系"></p>
-<p><strong>Processor，它包含了运行goroutine的资源</strong>，如果线程想运行goroutine，必须先获取P，P中还包含了可运行的G队列。</p>
-<h2 id="1-GMP模型"><a href="#1-GMP模型" class="headerlink" title="1.GMP模型"></a>1.GMP模型</h2><p>在Go中，线程是运行goroutine的实体，调度器的功能是把可运行的goroutine分配到工作线程上。</p>
-<p> <img src="/2022/01/11/Golang-GMP/9.png" class="" title="GMP模型"></p>
-<ul>
-<li><p>全局队列（Global Queue）：存放等待运行的G。</p>
-</li>
-<li><p>P的本地队列：同全局队列类似，存放的也是等待运行的G，存的数量有限，不超过<code>256个</code>。新建G‘时，G’会有限加入到P的本地队列，如果队列满了，则会把本地队列中一半的G移动到全局队列。</p>
-</li>
-<li><p>P列表：所有的P都在程序启动时创建，并保存在数组中，最多有<code>GOMAXPROCS(可配置)</code>个。</p>
-</li>
-<li><p>M：线程想运行任务就得获取P，从P的本地队列获取G。</p>
-</li>
-</ul>
-<h2 id="2-M的工作流程"><a href="#2-M的工作流程" class="headerlink" title="2.M的工作流程"></a>2.M的工作流程</h2><ul>
-<li>新建<code>G</code>时，新<code>G</code>会优先加入到<code>P</code>的本地队列。如果本地队列满了，则会把本地队列中一半的G移动到全局队列。</li>
-</ul>
-<p>    <img src="/2022/01/11/Golang-GMP/GMP-1.gif" class="" title="GMP模型"></p>
-<ul>
-<li><code>P</code>的本地队列为空时，就从全局队列里获取。</li>
-</ul>
-<p>    <img src="/2022/01/11/Golang-GMP/GMP-2.gif" class="" title="GMP模型"></p>
-<ul>
-<li>如果全局队列为空时，<code>M</code> 会从其他<code>P</code>的本地队列偷（stealing）一半G放到自己<code>P</code>的本地队列</li>
-</ul>
-<p>    <img src="/2022/01/11/Golang-GMP/GMP-stealing.gif" class="" title="GMP模型"></p>
-<ul>
-<li><code>M</code>运行<code>G</code>，<code>G</code>执行之后，<code>M</code>会从<code>P</code>获取下一个<code>G</code>,不断重复下去。</li>
-</ul>
-<p>    <img src="/2022/01/11/Golang-GMP/GMP-3.gif" class="" title="GMP模型"></p>
-<h2 id="3-有没有什么限制"><a href="#3-有没有什么限制" class="headerlink" title="3.有没有什么限制"></a>3.有没有什么限制</h2><p>在了解GMP的基础知识和运行原理之后，我们要知道在协程的运行过程中，真正干活的GMP又分别被什么约束？</p>
-<h3 id="1）M的限制"><a href="#1）M的限制" class="headerlink" title="1）M的限制"></a>1）M的限制</h3><p>    在协程的执行中，真正干活的是M（系统线程），因为G是用户态的东西，最终执行都是得映射到一个M上去运行。</p>
-<p>    那么M有没有限制呢？</p>
-<p>    答案是：有的。在Go语言中，M的默认数量限制是10000，如果超出则会报错</p>
-<pre class="line-numbers language-none"><code class="language-none">GO: runtime: program exceeds 10000-thread limit<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>通常只有在Goroutine出现阻塞操作的情况下，才会遇到这种情况，这也可能预示着你的程序有问题。</p>
-<p>一个M阻塞了，会创建新的M。</p>
-<p>若确切是需要那么多，还可以通过 <code>debug.SetMaxThreads</code> 方法进行设置。</p>
-<h3 id="2）G的限制"><a href="#2）G的限制" class="headerlink" title="2）G的限制"></a>2）G的限制</h3><p>Goroutine的创建数量是否有限制？</p>
-<p>答案是：没有</p>
-<p>但是理论上会受内存的影响。</p>
-<p>答案是：没有。但<strong>理论上会受内存的影响</strong>，假设一个 Goroutine 创建需要 4k（via @GoWKH）：</p>
-<ul>
-<li><p>4k * 80,000 = 320,000k ≈ 0.3G内存</p>
-</li>
-<li><p>4k * 1,000,000 = 4,000,000k ≈ 4G内存</p>
-</li>
-</ul>
-<p>以此就可以相对计算出来一台单机在通俗情况下，所能够创建 Goroutine 的大概数量级别。</p>
-<p>注：Goroutine 创建所需申请的 2-4k 是需要连续的内存块。</p>
-<h3 id="3）P的限制"><a href="#3）P的限制" class="headerlink" title="3）P的限制"></a>3）P的限制</h3><p><strong>P的数量受环境变量</strong><code>GOMAXPROCS</code> 的直接影响。</p>
-<p>环境变量 <code>GOMAXPROCS</code> 又是什么？在 Go 语言中，通过设置 <code>GOMAXPROCS</code>，用户可以调整调度中 P（Processor）的数量。</p>
-<p>另一个重点在于，与 P 相关联的的 M（系统线程），是需要绑定 P 才能进行具体的任务执行的，<strong>因此 P 的多少会影响到 Go 程序的运行表现</strong>。</p>
-<p>P 的数量基本是受本机的核数影响。</p>
-<h3 id="4）何为之合理？"><a href="#4）何为之合理？" class="headerlink" title="4）何为之合理？"></a>4）何为之合理？</h3><p>在介绍完 GMP 各自的限制后，我们回到一个重点，就是 “Goroutine 数量怎么预算，才叫合理？”。</p>
-<p>“合理” 这个词，是需要看具体场景来定义的，可结合上述对 GPM 的学习和了解。得出：</p>
-<ul>
-<li><p>M：有限制，默认数量限制是 10000，可调整。</p>
-</li>
-<li><p>G：没限制，但受内存影响。</p>
-</li>
-<li><p>P：受本机的核数影响，可大可小，不影响 G 的数量创建。</p>
-</li>
-</ul>
-<p>Goroutine 数量在 MG 的可控限额以下，多个把个、几十个，少几个其实没有什么影响，就可以称其为 “合理”。</p>
-<h3 id="5）真实情况"><a href="#5）真实情况" class="headerlink" title="5）真实情况"></a>5）真实情况</h3><p>在真实的应用场景中，没法如此简单的定义。如果你 Goroutine：</p>
-<ul>
-<li><p>在频繁请求 HTTP，MySQL，打开文件等，那假设短时间内有几十万个协程在跑，那肯定就不大合理了（可能会导致  too many files open）。</p>
-</li>
-<li><p>常见的 Goroutine 泄露所导致的 CPU、Memory 上涨等，还是得看你的 Goroutine 里具体在跑什么东西。</p>
-</li>
-</ul>
-<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p>[1]《Golang 调度器 GMP 原理与调度全分析》 ——Aceld :<a href="https://learnku.com/articles/41728">https://learnku.com/articles/41728</a></p>
-<p>[2]《GMP模型为什么要有P》 ——煎鱼:<a href="https://mp.weixin.qq.com/s/an7dml9NLOhqOZjEGLdEEw">https://mp.weixin.qq.com/s/an7dml9NLOhqOZjEGLdEEw</a></p>
-]]></content>
-      <categories>
-        <category>技术笔记</category>
-      </categories>
-      <tags>
-        <tag>读书笔记</tag>
-        <tag>golang</tag>
-        <tag>GMP</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>入职3年啦</title>
-    <url>/2022/01/08/Induction3YearReview/</url>
-    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><blockquote>
-<center>希望2022年，我们每个人都平平安安，工作顺利</center>
-<center>平安顺遂</center>
-</blockquote>
-<p>&emsp;&emsp;今天早晨睡醒，收到了公司通讯工具的提醒，打开后发现是一条祝福<br>&emsp;&emsp;时间过得好快，一转眼已经来公司3年了，仿佛3年前父母来北京探望我的场景还历历在目，19年的元旦，一家人在北京一起过了年</p>
-<img src="/2022/01/08/Induction3YearReview/1.png" class="">
-<p>&emsp;&emsp;18年12月，老爸老妈时隔多年又踏上了去往北京的火车，得知我要入职的地方在鸟巢旁边，也是兴奋不已的要去鸟巢逛一逛</p>
-<img src="/2022/01/08/Induction3YearReview/2.png" class="">
-<p>&emsp;&emsp;19年的1月8号，起了个大早跑到亦庄总部办理了入职，匆匆忙忙也忘记了拍照纪念，紧接着就开始了繁忙的生活<br>&emsp;&emsp;这是刚过完年，开始了第一个项目时候拍下的纪念，那天发了好多红牛hhhhhh😂</p>
-<img src="/2022/01/08/Induction3YearReview/3.png" class="">
-<p>&emsp;&emsp;项目刚开始的时候时间还是很紧张的，开始频繁的加班，那天是元宵节，记得我还发了个朋友圈，猿宵节，是程序猿通宵赶代码的中国传统节日hhhhh😂</p>
-<img src="/2022/01/08/Induction3YearReview/4.png" class="">
-<p>&emsp;&emsp;频繁的加班就意味着总是吃吃吃吃，已经记不清多少个夜晚干完活撸串啃披萨了，这也是我现在成为一个胖子的重要原因</p>
-<img src="/2022/01/08/Induction3YearReview/5.png" class="">
-<p>&emsp;&emsp;臭美一下，19年2月24号晚上10点多拍的，刚下班，那个时候还是个小鲜肉</p>
-<img src="/2022/01/08/Induction3YearReview/6.png" class="">
-<p>&emsp;&emsp;忙碌的工作中也结识了好多朋友，苦逼加班三人组也由此诞生，偶尔还会一起去五道口“学习😁</p>
-<img src="/2022/01/08/Induction3YearReview/7.png" class="">
-<p>&emsp;&emsp;19年的中秋节，公司发的八音盒和月饼</p>
-<img src="/2022/01/08/Induction3YearReview/8.png" class="">
-<p>&emsp;&emsp;19年还认识了我的她~在枯燥的公司-家两点一线的生活中，她进入了我的生活</p>
-<img src="/2022/01/08/Induction3YearReview/9.png" class="">
-<p>&emsp;&emsp;19年真的是忙碌的一年，我们的项目也经历了从0到1的过程，这张是去海南参加姐姐的婚礼，晚上在酒店改bug时拍下的😂</p>
-<img src="/2022/01/08/Induction3YearReview/10.png" class="">
-<p>&emsp;&emsp;19年12月份，又是一个周末，下雪啦，去公司加班的路上随手拍下的</p>
-<img src="/2022/01/08/Induction3YearReview/11.png" class="">
-<p>&emsp;&emsp;20年2月，疫情爆发了，开始了在家办公的日子</p>
-<img src="/2022/01/08/Induction3YearReview/12.png" class="">
-<p>&emsp;&emsp;在租住的小区随手拍下的，北京的天气时而让我喜欢，时而让我讨厌</p>
-<img src="/2022/01/08/Induction3YearReview/13.png" class="">
-<p>&emsp;&emsp;20年的日子相比于19年，轻松了许多，饭后也有时间去公司周边散散步了</p>
-<img src="/2022/01/08/Induction3YearReview/14.png" class="">
-<p>&emsp;&emsp;20年7月，难兄难弟的一次悲惨出差生活，蹲了2天的机房</p>
-<img src="/2022/01/08/Induction3YearReview/15.png" class="">
-<p>&emsp;&emsp;20年9月，在公司度过的第二个生日呀</p>
-<img src="/2022/01/08/Induction3YearReview/16.png" class="">
-<p>&emsp;&emsp;转眼间20年就过去了，公司组织架构也做了调整，我跟随着项目也来到了现在的部门，技术栈也从java转为了go</p>
-<img src="/2022/01/08/Induction3YearReview/17.png" class="">
-<p>&emsp;&emsp;21年在新的部门，学会了很多新的技术，也成长了很多，职级和薪资方面也有了进步。同时，我也迈向了人生的一个新的阶段，我完成了求婚、订婚</p>
-<img src="/2022/01/08/Induction3YearReview/18.png" class="">
-<p>&emsp;&emsp;22年已经开始，新的一年，我要结婚啦！！！也代表着我身后有了一个家庭，我有更多的责任，新的一年，要更加努力的工作，在事业上有提升！！加油呀</p>
-]]></content>
-      <categories>
-        <category>小周的北漂生活</category>
-      </categories>
-      <tags>
-        <tag>北漂生活</tag>
-        <tag>职场碎碎念</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>小仙女生气记录</title>
-    <url>/2021/08/01/angry-record/</url>
-    <content><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="抱歉, 这个密码看着不太对, 请再试试." data-whm="抱歉, 这个文章不能被校验, 不过您还是能看看解密后的内容.">
-  <script id="hbeData" type="hbeData" data-hmacdigest="4e46751bea991dd469a8a2b13d8f6f2cc6d7122c2007e4614af066c4f39415f4">bb708e47e52e3bd7ae6e0a7057ab8e2f215507db890206875a7e2c1cb422e976ec58612545992cdc6a5e05001a9dee1b6e4a16895160372cac128c68d12812ad60b9313ef528e6ee5f66b8089c69ee3bd465a06b7f4b920102cb18818dcc351580516fc5fbb9c81181253e4a6a10d4c36b7200585af0a696fd912b4a95e7a36804d3e0d1060cb829ecfc20969fdce52dbfc6e229313583732fb58e5fea706b1f191c384802e6a84d4b6b2abc20f689134da146874a18fb5831bd543e8aab99db7cccacedb0467fb534b93fbb53023b366632dccd7e12875284a655c595b6451358b563163792a2f67bd301ba95436587b93a16ffbe8b079152377d7d17c004b065af0e0e0f2e7ba2fa890f1f6f78685f5bf238e25a4001babfdc139292661c5b80d035ebff63c4d7cab59b9b9730f3b75b094301ccd741c02c05a0a35c2469661b380f5f9987d06b1417a2f9b9c4a23cae3cd2991b3fda8a3ffa1be683d521e52707fe7e2e113cc8b082aa99b90917b09edf9c9a7cd6ec48d5c3244c8693501efe763da8df2decb14e15fbe28e78ef30e90fafd11e69850ea3fb74414e8ae8649d516af40175bec6f5f015f3413fc854f869198e3a03cdbfaa0384385682a510858a68f02f1296b6b5c1ef4364ca6d23decc846fdf28b324bc96d5c2ec3b65fbfd70d4e9f3699c4d46bb2834bedab85fde80418305348146a0c076833f1af8eef7d407cb780c0b0ddbdd3c6533879c49a0aed2a071d7a1decb9ca9a12e6a1d57c4062dada363479a75c60f20d01d1acf27ade2df92a65bd6e93de6a13547bea1d3b96dceeca32eae76d15c805f8235a3f9f1552d995747e27536d8b2b56cfbdf0bbab9068a43c33590c2ad04fdb4efb9103b78ce88d653025813e16848ab7b2ba00a6ea4d6b09c8094f26343893224636af611b6078edf501c0b03b2321f3230e8d82f0c9644fc50cb9418bf32c8d3be919c6007adaab6059b0458bfb7c236e6aa4ba198739d77c23e9f9423fc64858bc20c8314eb58f1fe71061a40e1443e6712c87bf29e58e8701cf491714fda2d7dfbd0889b82fd8efc1ffea52f988c27aff064a4613f06d0d350af552cc3aa5bfe5d63a177f263e8271c39a7c96319dcd0fef59d0a7cccf51c389fd06ec8a1b52c12c9101ac7187dd0c2a66352cce2ab1b3117000ab9d43333f260abe61efc8e7e0b76bf958782113b1441c41836639544617807f9d4f759fb98fa67fb23ec347bc7a97d66e1d94ce47478d38147733dd2ec2afda04b238f1b91de7b88a548a72067c8939f4a16fb7734ccf13bf4e17dbc94fa935846901b6cb05799fba2a72c9397c6e9cfd144d6ad4180799b8a50d5ae72dbb98f83ac69eb5085613e8135cde07eca868639026691689a153d471b0586dfa5d4ecec4419d553b7dd182c81504b6456d79fc39a52a9f654a2daeabab4d635308c0441e9fb5585ec073d8d03d283ac11f02101981691de32c6fdd560194180204c1fd3b9c0a6742955757654f4f1d3cc158919c0e4b770af0949ee8ee70d07ea2f59e8abad8b36ebdec734a26116d48d8a73746622b0d70aa31cafe9c9fbc50e463a78f7ce20272a523a83dae2965a95313dbaf7b6ce562137c2c2101ec02e5b5df92baf9a6cf0fb544644f6e6a45916722ef7c846fb4bf600a0fdf318579048146f4f2333a491f902813674a3122c5cb319815ca98e9c893688f7b0d6572318e9d664c06e037c37ddeceac3f6c79232722ba8f2c5c038bfa09e839518ae39bedadf01b941e92f212a0f264d02709f5a1042d6101190de7d1e0577a0040125c19d1e7335a4c51cd7e1edaf7e79043bf139e7507473c0226b2a5bfbcfae5fcd23a0cf5a76479b90b0c1bcfb1cc54c1b9066fec0ac7e96699ac12d38a5ab4e299e420873c4d5a158d6ce892b87645c80aa9083bb7d3adc170009bfec184d0f61ec1e728583dd2524c1e15c8bd16100834d64122cf96017a5104cc85ba831cf844ecc5141dcd3a3f0d7c092121f0d3d9d8f851589b6b72243e93ff7b20cdb37a7d842b217bb03942d6621b39cbaa58ced92ed1161fd5b2682cb4fe3dfe79e550cd040543ccca7e9d30d0eb95126ff8735bfdac0c1a437fe5747961c237e98db79750255ef7307a16f4a0c04266107e33a67788c4830dc35f05ae2cbad7ce95e87d7294f466df8561c4e06542e6e70823c04e67291243e2d63d975f1c6da5ab328675f7824d5da74ac22b25d5922e4cf262f3cc790b6bb726cb31b33813ee0650f8d00c03cc2273ec5b8f86c7465c523362c736e9053d62225287b1be7c0e4463dfd9157de731a338eaa4a2e5ed21b14fe9ea6e25a5eb47258716cd89e5480ebb0f3277c406d808ad9296932f1ca73ac6ac459265d6d6e51c691558158cea1fcb3409fcf34b8ed610b375240e5930e33de44940f6385a688ab605354d7d85718fd6f25397348fdf7e74985be0c4d41693055620999f614e04d590ac5b038c678c4735c28c6e8d97c0eb4603d5ee632f5d19a69cd28f9a3cb94986dd3c71fed5e8c0c48dbdb3c1f5b114fddb328534f76a94476874eb012ab0863829744314d517a0d0ee0073b5dd4ed1efcad8a6da201346a751f8600368cd9f2fd490f2579c8cc32f8b1cc23897cb7366461aa9fd63c915447098d03f00087d561e8e678775de5892daecf4b478c3e7492f6bd33a4c6db266c917f3c1b6e89909edb0c3cdd82844a0dd01b92e5cede83d7637a76b3280b9c404953e129c44a2cc552c62aa0b02852b03b7a0268c077766ecb21f6d24f30b67ce7ca624fb25955d82a00dbed5aeb52b13c841d384fc2982a03cb71044d73f8215a5803f285fb02f476342c05d0a242cd9744e0e113637c80a8d97a9dae2ceaea23a6bf4df6fbc0424cfe94b69cce3d4524f5075fb240c3925a7c02c840d911e31d9f75c4926888a0a9fe901b61792a4fd393a6f59fd2973bc3a686c89d259af70653dfc8911b8a5c1b0e8613b1fbd0610982c62c973142ae18db874dd0ec901696b95b8f68adf5545ef628062209f9cd386612ccdb75fb99cb684b4e701e595d6790b9a2555988868343df69391da8e29095caa533a9c0668b966089a3926f46070b79dc7bbcf83198572b0c4abedd73c9087276139fad56a130aaefd231d21d094c61f463aee3e299db9f13c5ba9783bd7aab67cf865ebb885960137c70b4d6ebadc32cd52fdd5da228984f59a262e4cc82d131285541869456757451a19e90a62e9db1e8cf77ca0d10c90c6149c882c77a5091fd34361bdeb124b1bd0dcb728d4121668695bf2dc6fe9c42ad3491b861c513b747dc8f8e972ccdeb5560292c8cc9bd60cc88669a7a2b631a4de372154dc100998178b767c85bf99560a0c98e8162f7ac509492d169938b0c0da251aaee8c42a3f38f8b2cff7db5f8cbb9473497faddbb9082dac262e00af88cfc4241abca036a36ca7a5773a204f050a96e85e4981fd4899f8cbf026fbe56a258c8b53fd6a372afc1fef5a717ac446f35b19f2a9d8e2d3951134fbfc7dab70f6fb033c6391437c582e18ce9b1af67aad5c4d1e9edcc2673a0579f4f2a5f438c00e2075dcb344765795fa2dadb87cc3d33d5c8234fdbdc45470f07ddf8f6b98aeb5939e148614bf7d3dbde3735daa6b4e6b6d55b3701abc4975e2b2e9fda042c827b8b620564623bd7879f0ebce04df1a00cb59184e30eb372fcfe99d094d0760a105b5d9514f68b6f468782f99ee3cbca8479810d455c29e9022cf26e78cffbdd59480700b9230ac0c50818fd40d6f4595f570c09ec6bcddc4628c25220d96ef0d5838f28def169c5cd64f99cd91d74</script>
-  <div class="hbe hbe-content">
-    <div class="hbe hbe-input hbe-input-default">
-      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
-      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
-        <span class="hbe hbe-input-label-content hbe-input-label-content-default">请输入密码.</span>
-      </label>
-    </div>
-  </div>
-</div>
-<script data-pjax src="/lib/hbe.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css">]]></content>
-      <categories>
-        <category>我和她</category>
-      </categories>
-      <tags>
-        <tag>我和她</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>网络知识学习笔记</title>
-    <url>/2021/07/07/http-note/</url>
-    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="一、认识HTTP"><a href="#一、认识HTTP" class="headerlink" title="一、认识HTTP"></a>一、认识HTTP</h1><p>超文本传输协议（Hypertext Transfer Protocol)，可以进行文字分割：超文本（Hypertext），传输（Transfer），协议（Protocol），关系如下：</p>
-<h2 id="什么是超文本"><a href="#什么是超文本" class="headerlink" title="什么是超文本"></a>什么是超文本</h2><p>在互联网早期的时候，我们输入的信息只能保存在本地，无法和其他电脑进行交互。我们保存的信息通常都以<code>文本</code>即简单字符的形式存在，文本是一种能够被计算机解析的有意义的二进制数据包。而随着互联网的高速发展，两台电脑之间能够进行数据的传输后，人们不满足只能在两台电脑之间传输文字，还想要传输图片、音频、视频，甚至点击文字或图片能够进行<code>超链接</code>的跳转，那么文本的语义就被扩大了，这种语义扩大后的文本就被称为<code>超文本(Hypertext)</code>。</p>
-<img src="/2021/07/07/http-note/1.png" class="">
-
-<h2 id="什么是传输"><a href="#什么是传输" class="headerlink" title="什么是传输"></a>什么是传输</h2><p>那么我们上面说到，两台计算机之间会形成互联关系进行通信，我们存储的超文本会被解析成为二进制数据包，由传输载体（例如同轴电缆，电话线，光缆）负责把二进制数据包由计算机终端传输到另一个终端的过程称为<code>传输(transfer)</code>。</p>
-<h2 id="什么是协议"><a href="#什么是协议" class="headerlink" title="什么是协议"></a>什么是协议</h2><p>网络协议就是网络中(包括互联网)传递、管理信息的一些规范。如同人与人之间相互交流是需要遵循一定的规矩一样，计算机之间的相互通信需要共同遵守一定的规则，这些规则就称为网络协议。</p>
-<p> <strong>HTTP 是一个在计算机世界里专门在两点之间传输文字、图片、音频、视频等超文本数据的约定和规范</strong></p>
-<h1 id="二、网络模型"><a href="#二、网络模型" class="headerlink" title="二、网络模型"></a>二、网络模型</h1><p>网络是一个复杂的系统，不仅包括大量的应用程序、端系统、通信链路、分组交换机等，还有各种各样的协议组成，那么现在我们就来聊一下网络中的协议层次。<br>为了给网络协议的设计提供一个结构，网络设计者以<strong>分层</strong>(layer)的方式组织协议，每个协议属于层次模型之一。<strong>每一层都是向它的上一层提供服务</strong>(service)，即所谓的服务模型(service model)。每个分层中所有的协议称为 协议栈(protocol stack)。因特网的协议栈由五个部分组成：<strong>物理层</strong>、<strong>链路层</strong>、<strong>网络层</strong>、<strong>传输层</strong>和<strong>应用层</strong>。我们采用自上而下的方法研究其原理，也就是应用层 -&gt; 物理层的方式。</p>
-<h2 id="OSI模型"><a href="#OSI模型" class="headerlink" title="OSI模型"></a>OSI模型</h2><p>ISO（国际标准化组织）提出来计算机网络应该按照7层来组织，那么7层网络协议栈与5层的区别在哪里？</p>
-<img src="/2021/07/07/http-note/2.png" class="">
-<p>OSI模型比网络模型多了表示层和会话层。<br>表示层主要包括数据压缩和数据加密以及数据描述，数据描述使得应用程序不必担心计算机内部存储格式的问题，而会话层提供了数据交换的定界和同步功能，包括建立检查点和恢复方案。</p>
-<img src="/2021/07/07/http-note/3.png" class="">
-
-<h2 id="应用层"><a href="#应用层" class="headerlink" title="应用层"></a>应用层</h2><p>应用层是网络应用程序和网络协议存放的分层，因特网的应用层包括许多协议，包括http，电子邮件传送协议SMTP、端系统文件上传协议FTP、还有域名解析的DNS协议。应用层协议分布在多个端系统上，一个端系统应用程序与另外一个端系统应用程序交换信息分组。我们把位于应用层的信息分组称为<strong>报文</strong>(message)。</p>
-<h2 id="传输层"><a href="#传输层" class="headerlink" title="传输层"></a>传输层</h2><p>传输层传输应用程序之间的报文。这一层主要有两种传输协议<strong>TCP</strong>和<strong>UDP</strong>。<br><strong>TCP:</strong> 向他的连接程序提供面向连接的服务，它能够控制并确认报文是否到达，并提供了拥塞机制来控制网络传输，因此当网络拥塞时，会抑制其传输速率。<br><strong>UDP:<strong>协议向它的应用程序提供无连接服务。它不具备可靠性的特征，没有流量控制，也没有拥塞控制。<br>我们把传输层的分组称为</strong>报文段。</strong></p>
-<h2 id="网络层"><a href="#网络层" class="headerlink" title="网络层"></a>网络层</h2><p>因特网的网络层负责将称为 <code>数据报(datagram)</code> 的网络分层从一台主机移动到另一台主机。网络层一个非常重要的协议是IP协议，所有具有网络层的因特网组件都必须运行IP协议，<strong>IP协议</strong>是一种网际协议，除了IP协议外，网络层还包括一些其他网际协议和路由选择协议，一般把网络层就称为IP层，由此可知IP协议的重要性。</p>
-<h2 id="链路层"><a href="#链路层" class="headerlink" title="链路层"></a>链路层</h2><p>现在我们有应用程序通信的协议，有了给应用程序提供运输的协议，还有了用于约定发送位置的IP协议，那么如何才能真正的发送数据呢？为了将分组从一个节点（主机或路由器）运输到另一个节点，网络层必须依靠链路层提供服务。链路层的例子包括以太网、wifi和电缆接入的DOCSIS协议，因为数据从源目的地传送通常需要经过几条链路，一个数据包可能被沿途不同的链路层协议处理，我们把链路层的分组成为帧（frame)</p>
-<h2 id="物理层"><a href="#物理层" class="headerlink" title="物理层"></a>物理层</h2><p>虽然链路层的作用是将帧从一个端系统运输到另一个端系统，而物理层的作用是将帧中的一个个 <code>比特</code> 从一个节点运输到另一个节点，物理层的协议仍然使用链路层协议，这些协议与实际的物理传输介质有关，例如，以太网有很多物理层协议：关于双绞铜线、关于同轴电缆、关于光纤等等。</p>
-<h1 id="三、与HTTP相关的协议"><a href="#三、与HTTP相关的协议" class="headerlink" title="三、与HTTP相关的协议"></a>三、与HTTP相关的协议</h1><p>在互联网中，任何协议都不会单独的完成信息交换，虽然http协议属于应用层协议，但是它仍需要其他层次协议的配合来完成信息的交换。</p>
-<h2 id="TCP-IP协议"><a href="#TCP-IP协议" class="headerlink" title="TCP/IP协议"></a>TCP/IP协议</h2><p>TCP/IP 我们一般称之为协议簇， TCP/IP 协议簇中不仅仅只有 TCP 协议和 IP 协议，它是一系列网络通信协议的统称。而其中最核心的两个协议就是 TCP / IP 协议。<br>TCP协议的全程是<strong>传输控制协议</strong>，HTTP使用TCP作为通信协议，因为TCP是一种可靠的协议，能保证数据不丢失。<br>IP协议主要解决通信双方寻址问题。IP协议使用IP地址来标识互联网上的每一台计算机。</p>
-<h2 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h2><p>DNS的全称是域名系统。将域名和IP地址相互映射的一个分布式数据库。</p>
-<h2 id="URI-URL"><a href="#URI-URL" class="headerlink" title="URI/URL"></a>URI/URL</h2><p>URI的全称是<strong>统一资源标识符，</strong>能够唯一的标记互联网上的资源。<br>URL的全称是<strong>统一资源定位符</strong>，也就是我们俗称的网址，实际上是URI的一个子集。**</p>
-<h1 id="四、HTTP请求响应过程（重点理解）"><a href="#四、HTTP请求响应过程（重点理解）" class="headerlink" title="四、HTTP请求响应过程（重点理解）"></a>四、HTTP请求响应过程（重点理解）</h1><h2 id="1-DNS解析、发起TCP连接"><a href="#1-DNS解析、发起TCP连接" class="headerlink" title="1.DNS解析、发起TCP连接"></a>1.DNS解析、发起TCP连接</h2><p>DNS服务器会根据域名的映射，找到域名所在的地址，然后HTTP客户端进程在80端口发起一个到域名所在服务器的TCP连接。</p>
-<h2 id="2-HTTP客户端发送HTTP请求报文"><a href="#2-HTTP客户端发送HTTP请求报文" class="headerlink" title="2.HTTP客户端发送HTTP请求报文"></a>2.HTTP客户端发送HTTP请求报文</h2><p>HTTP客户端向服务器发送HTTP请求报文。</p>
-<h2 id="3-HTTP客户端接收报文、解析，并封装到HTTP响应报文"><a href="#3-HTTP客户端接收报文、解析，并封装到HTTP响应报文" class="headerlink" title="3.HTTP客户端接收报文、解析，并封装到HTTP响应报文"></a>3.HTTP客户端接收报文、解析，并封装到HTTP响应报文</h2><p>HTTP接收报文，解析报文，从存储中检索资源对象，检索出来的对象进行封装到响应报文中，然后向客户端发送。</p>
-<h2 id="4-HTTP服务器通知TCP断开连接"><a href="#4-HTTP服务器通知TCP断开连接" class="headerlink" title="4.HTTP服务器通知TCP断开连接"></a>4.HTTP服务器通知TCP断开连接</h2><p>实际是需要等到客户端接受完响应报文后才会断开</p>
-<h2 id="5-提取报文并检查其中内部对象"><a href="#5-提取报文并检查其中内部对象" class="headerlink" title="5.提取报文并检查其中内部对象"></a>5.提取报文并检查其中内部对象</h2><p>HTTP 客户端接受完响应报文后，TCP 连接会关闭。HTTP 客户端从响应中提取出报文中是一个 HTML 响应文件，并检查该 HTML 文件，然后循环检查报文中其他内部对象。</p>
-<h2 id="6-通过显示器呈现给用户"><a href="#6-通过显示器呈现给用户" class="headerlink" title="6.通过显示器呈现给用户"></a>6.通过显示器呈现给用户</h2><p>检查完成后，HTTP 客户端会把对应的资源通过显示器呈现给用户。</p>
-<h1 id="五、HTTP1-0、HTTP1-1、HTTP2-0的区别（面试可能会问）"><a href="#五、HTTP1-0、HTTP1-1、HTTP2-0的区别（面试可能会问）" class="headerlink" title="五、HTTP1.0、HTTP1.1、HTTP2.0的区别（面试可能会问）"></a>五、HTTP1.0、HTTP1.1、HTTP2.0的区别（面试可能会问）</h1><h2 id="1-HTTP协议基本优化"><a href="#1-HTTP协议基本优化" class="headerlink" title="1.HTTP协议基本优化"></a>1.HTTP协议基本优化</h2><p>影响一个HTTP网络请求的因素主要是两个方面：<strong>带宽</strong>和<strong>延迟</strong><br>带宽在目前来看，我国的网络基础建设已经使得带宽得到极大的提升，所以这个方面我们可以暂且不考虑。<br><strong>延迟</strong>：<br>1）<strong>浏览器阻塞</strong>：浏览器会因为一些原因阻塞请求。浏览器对于同一个域名，同时只能有4个连接，超过浏览器最大连接数限制，后续请求会被阻塞<br>2）<strong>DNS查询</strong>：通过DNS协议去对域名解析来获取ip地址，如果获取较慢，也会造成延迟。通常可以利用DNS缓存结果来达到减少时间的目的<br>3）<strong>建立连接：</strong>HTTP是基于TCO协议的，浏览器最快也要在第三次握手的时候才能捎带HTTP请求报文，达到真正的建立连接，但是这些连接无法复用会导致每次请求都经历三次握手和慢启动，三次握手在高延迟的场景下影响较明显。</p>
-<h2 id="2-HTTP1-0和HTTP1-1的区别"><a href="#2-HTTP1-0和HTTP1-1的区别" class="headerlink" title="2.HTTP1.0和HTTP1.1的区别"></a>2.HTTP1.0和HTTP1.1的区别</h2><p>HTTP1.1是当前使用最为广泛的HTTP协议。主要区别：<br>1）<strong>缓存处理</strong>：HTTP1.1在header中引入了更多的缓存控制策略。（IF-Match、IF-None-Match等）<br>2）<strong>带宽优化</strong>及网络连接的使用：<strong>HTTP1.0</strong>中存在<strong>带宽浪费</strong>的现象，例如Client端只需要某个对象的一部分吗，但是Server把整个对象传输过来，且<strong>不支持断点续传</strong>。<strong>HTTP1.1</strong>在header中引入了range头域，允许只请求资源的某个部分。<br>3）<strong>错误通知</strong>的管理：在HTTP1.1中新增了24个错误状态响应码。如409冲突<br>4）<strong>Host头处理</strong>：HTTP1.0中认定每台server都绑定一个唯一的ip地址，因此请求的URL中没有传递主机名。但随着虚拟机技术的发展，一台服务器上可能存在多个vm,且共享一个IP，HTTP1.1的请求消息和响应消息都支持Host头域<br>5）<strong>长连接</strong>：HTTP1.1中支持长连接，在一个TCP连接上可以传送多个HTTP请求和响应，减少了建立和关闭连接的消耗。在HTTP1.1中默认开启connection:keep-alive。</p>
-<h2 id="3-HTTP-2-0"><a href="#3-HTTP-2-0" class="headerlink" title="3.HTTP 2.0"></a>3.HTTP 2.0</h2><p>HTTP2.0可以说是SPDY的升级版<br>1）<strong>多路复用</strong>（multiplexing）：多个请求共享一个tcp连接的方式，解决了浏览器请求数量限制的问题。<br>2）<strong>请求优先级：</strong>多路复用可能带来一个问题是，在连接共享的基础之上有可能关键请求会被阻塞，HTTP2.0允许给每个请求设置优先级。<br>3）<strong>header压缩</strong><br>4）<strong>服务端推送</strong>：会将css文件或js文件推送给client，当client再次尝试获取静态文件时，可以直接从缓存中获取，不用再发请求了。<br>5)  <strong>支持明文HTTP传输</strong></p>
-<h1 id="六、什么是HTTPS"><a href="#六、什么是HTTPS" class="headerlink" title="六、什么是HTTPS"></a>六、什么是HTTPS</h1><p>HTTP一般是明文传输，很容易被攻击者剽窃重要信息。HTTPS应运而生。<br>HTTPS是以安全为目标的HTTP通道，在HTTP的基础上通过传输加密和身份认证保证传输过程的安全性。<br>HTTPS在HTTP的基础上增加了SSL层。<br><strong>HTTPS=HTTP+SSL</strong><br>**</p>
-<h2 id="深入理解HTTPS工作原理"><a href="#深入理解HTTPS工作原理" class="headerlink" title="深入理解HTTPS工作原理"></a>深入理解HTTPS工作原理</h2><h3 id="1-为什么需要HTTPS？"><a href="#1-为什么需要HTTPS？" class="headerlink" title="1.为什么需要HTTPS？"></a>1.为什么需要HTTPS？</h3><p>HTTP协议存在的问题：<br>1）通信使用铭文，内容可能被窃听<br>2）无法证明报文的完整性，所以可能遭篡改<br>3）不验证通信方的身份，因此有可能遭遇伪装<br>HTTPS协议的优势：<br>1）数据隐私性：内容经过对称加密，每个连接生成一个唯一的加密密钥<br>2）数据完整性：内容传输经过完整性校验<br>3）身份认证：第三方无法伪造服务端（客户端）身份</p>
-<h3 id="2-HTTPS如何解决HTTP的问题？"><a href="#2-HTTPS如何解决HTTP的问题？" class="headerlink" title="2.HTTPS如何解决HTTP的问题？"></a>2.HTTPS如何解决HTTP的问题？</h3><p>HTTPS并非是应用层的一种新协议，只是HTTP部分通信接口用SSL和TLS协议代替而已。</p>
-<img src="/2021/07/07/http-note/4.png" class="">
-<p>HTTPS协议的主要功能基本都依赖于TLS/SSL协议，TLS/SSL的功能实现主要依赖于三类基本算法：<strong>散列函数</strong>、<strong>对称加密</strong>和<strong>非对称加密。</strong><br><strong>非对称加密—实现身份认真和密钥协商</strong><br><strong>对称加密—采用协商的密钥对数据加密</strong><br><strong>散列函数—验证信息的完整性</strong></p>
-<img src="/2021/07/07/http-note/5.png" class="">
-
-<h3 id="3-HTTPS的工作流程-重点"><a href="#3-HTTPS的工作流程-重点" class="headerlink" title="3.HTTPS的工作流程(重点)"></a>3.HTTPS的工作流程(重点)</h3><img src="/2021/07/07/http-note/6.png" class="">
-<p>1.client发起一个HTTPS的请求，根据规定，Client需要连接Server的443端口<br>2.Server把事先配置好的公钥证书（public key certificate）返回给客户端<br>3.Client验证公钥证书：比如是否在有效期内、证书用途是否匹配、它的上一级证书是否有效等，这是一个递归的过程，直到验证到根证书。如果验证通过则继续，否则显示告警信息。<br>4.Client使用伪随机数生成器生成加密所使用的对称密钥，然后用证书的公钥加密这个对称密钥，发给Server<br>5.Server使用自己的私钥（private key）解密这个消息，得到对称密钥。至此，Client和Server双方都持有了相同的对称密钥<br>6.Server使用对称密钥加密明文内容，发给Client<br>7.Client使用对称密钥解密响应的密文，得到明文内容A</p>
-<h3 id="4-HTTP和HTTPS的区别"><a href="#4-HTTP和HTTPS的区别" class="headerlink" title="4.HTTP和HTTPS的区别"></a>4.HTTP和HTTPS的区别</h3><p>HTTPS基于<strong>传输层</strong>，HTTP基于应用层<br>HTTPS需要用到SSL证书，HTTP不用<br>HTTPS比HTTP更加安全，对搜索引擎更加友好</p>
-<h1 id="七、TCP协议"><a href="#七、TCP协议" class="headerlink" title="七、TCP协议"></a>七、TCP协议</h1><p>TCP协议是一个<strong>面向连接的</strong>、<strong>可靠的</strong>、<strong>基于IP</strong>的<strong>传输层协议</strong>。</p>
-<h2 id="1-TCP头部结构和字段介绍"><a href="#1-TCP头部结构和字段介绍" class="headerlink" title="1.TCP头部结构和字段介绍"></a>1.TCP头部结构和字段介绍</h2><img src="/2021/07/07/http-note/7.png" class="">
-<p>从上图可见，TCP协议是封装在IP数据包中的。<br>下图是TCP报文的数据格式：</p>
-<img src="/2021/07/07/http-note/8.png" class="">
-
-<h3 id="1-1-源端口和目的端口"><a href="#1-1-源端口和目的端口" class="headerlink" title="1.1 源端口和目的端口"></a>1.1 源端口和目的端口</h3><p>各占两个字节，这两个值加上<strong>IP首部中</strong>的<strong>源端IP地址</strong>和<strong>目的端IP地址</strong>唯一确定一个TCP连接。有时一个IP地址和一个端口号也成为<strong>socket</strong>。</p>
-<h3 id="1-2-序号（seq）"><a href="#1-2-序号（seq）" class="headerlink" title="1.2 序号（seq）"></a>1.2 序号（seq）</h3><p>占<strong>4个字节</strong>，是本报文段所发送的数据项目组第一个字节的序号。在TCP传送的数据流中，每一个字节都有一个序号。<br>例如，一报文段的序号为300，而且数据共100字节，则下一个报文段的序号就是400；序号是32bit的无符号数，序号到达2^32-1后从0开始。</p>
-<h3 id="1-3-确认序号（ack）"><a href="#1-3-确认序号（ack）" class="headerlink" title="1.3 确认序号（ack）"></a>1.3 确认序号（ack）</h3><p><strong>占4字节</strong>，是期望收到对方下次发送的数据的<strong>第一个字节</strong>的<strong>序号</strong>。也就是期望收到的下一个报文段的<strong>首部</strong>中的<strong>序号</strong>；<br><strong>确认序号应该是上次已成功收到数据字节序号+1。</strong><br><strong>只有ACK标志为1时，确认序号才有效。</strong></p>
-<h3 id="1-4-数据偏移"><a href="#1-4-数据偏移" class="headerlink" title="1.4 数据偏移"></a>1.4 数据偏移</h3><p>占4比特，表示数据开始的地方离TCP段的起始处有多远。实际上就是TCP段首部的长度。由于首部长度不固定，因此数据偏移字段是必要的。数据偏移以32位为长度单位，也就是4个字节，因此<strong>TCP首部的最大长度是60个字节</strong>。即偏移<strong>最大为15个长度单位</strong>=1532位=154字节。</p>
-<h3 id="1-5-保留"><a href="#1-5-保留" class="headerlink" title="1.5 保留"></a>1.5 保留</h3><p>  6比特，供以后应用，现在置为0。</p>
-<h3 id="1-6-6个标志位比特"><a href="#1-6-6个标志位比特" class="headerlink" title="1.6 6个标志位比特"></a>1.6 6个标志位比特</h3><p>① URG：当URG=1时，注解此报文应尽快传送，而不要按本来的列队次序来传送。与“紧急指针”字段共同应用，紧急指针指出在本报文段中的紧急数据的最后一个字节的序号，使接管方可以知道紧急数据共有多长。<br>② ACK：只有当ACK=1时，确认序号字段才有效；<br>③ PSH：当PSH=1时，接收方应该尽快将本报文段立即传送给其应用层。<br>④ RST：当RST=1时，表示出现连接错误，必须释放连接，然后再重建传输连接。复位比特还用来拒绝一个不法的报文段或拒绝打开一个连接；<br>⑤ SYN：SYN=1,ACK=0时表示请求建立一个连接，携带SYN标志的TCP报文段为同步报文段；<br>⑥ FIN：发端完成发送任务。</p>
-<table>
-<thead>
-<tr>
-<th align="left">字段</th>
-<th align="left">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">URG</td>
-<td align="left">紧急指针是否有效。为1，表示某一位需要被优先处理</td>
-</tr>
-<tr>
-<td align="left">ACK</td>
-<td align="left">确认号是否有效，一般置为1。</td>
-</tr>
-<tr>
-<td align="left">PSH</td>
-<td align="left">提示接收端应用程序立即从TCP缓冲区把数据读走。</td>
-</tr>
-<tr>
-<td align="left">RST</td>
-<td align="left">对方要求重新建立连接，复位。</td>
-</tr>
-<tr>
-<td align="left">SYN</td>
-<td align="left">请求建立连接，并在其序列号的字段进行序列号的初始值设定。建立连接，设置为1</td>
-</tr>
-<tr>
-<td align="left">FIN</td>
-<td align="left">希望断开连接。</td>
-</tr>
-</tbody></table>
-<h3 id="1-7-窗口"><a href="#1-7-窗口" class="headerlink" title="1.7 窗口"></a>1.7 窗口</h3><p><strong>TCP通过滑动窗口的概念来进行流量控制。</strong><br>设想在发送端发送数据的速度很快而接收端接收速度却很慢的情况下，为了保证数据不丢失，显然需要进行流量控制， 协调好通信双方的工作节奏。所谓<strong>滑动窗口</strong>，可以理解成接收端所能提供的缓冲区大小。<br>TCP利用一个滑动的窗口来告诉发送端对它所发送的数据能提供多大的缓冲区。窗口大小为字节数起始于确认序号字段指明的值（这个值是接收端正期望接收的字节）。窗口大小是一个16bit字段，因而窗口大小最大为65535字节。</p>
-<h3 id="1-8-检验和"><a href="#1-8-检验和" class="headerlink" title="1.8 检验和"></a>1.8 检验和</h3><p>检验和覆盖了整个TCP报文段：TCP首部和数据。这是一个强制性的字段，一定是由发端计算和存储，并由收端进行验证。</p>
-<h3 id="1-9-紧急指针"><a href="#1-9-紧急指针" class="headerlink" title="1.9 紧急指针"></a>1.9 紧急指针</h3><p>只有当URG标志置1时紧急指针才有效。紧急指针是一个正的偏移量，和序号字段中的值相加表示紧急数据最后一个字节的序号。</p>
-<h2 id="2-TCP协议三次握手过程理解"><a href="#2-TCP协议三次握手过程理解" class="headerlink" title="2.TCP协议三次握手过程理解"></a>2.TCP协议三次握手过程理解</h2><p>首先看一个图</p>
-<img src="/2021/07/07/http-note/9.png" class="">
-<p>1）<strong>第一次握手</strong>：client发送syn包到server，并进入SYN_SENT状态，等待server确认；<br>2）<strong>第二次握手</strong>：server收到syn包，向client确认SYN，同时也发送一个SYN包，即SYN+ACK，此时服务器进入<strong>SYN_RECV</strong>状态<br>3）<strong>第三次握手</strong>：客户端收到SYN+ACK包，并向server端发送确认包ACK(ack=y+1)，此包发送完毕，client和server进入<strong>ESTABLISHED</strong>(TCP连接成功)状态。</p>
-<h2 id="3-TCP协议四次挥手过程理解"><a href="#3-TCP协议四次挥手过程理解" class="headerlink" title="3.TCP协议四次挥手过程理解"></a>3.TCP协议四次挥手过程理解</h2><img src="/2021/07/07/http-note/10.png" class="">
-
-<p>1）客户端进程发出连接释放报文，并且停止发送数据。释放数据报文首部，FIN=1，其序列号为seq=u（等于前面已经传送过来的数据的最后一个字节的序号加1），此时，客户端进入<strong>FIN-WAIT-1</strong>（终止等待1）状态。 TCP规定，FIN报文段即使不携带数据，也要消耗一个序号。<br>2）服务器收到连接释放报文，发出确认报文，ACK=1，ack=u+1，并且带上自己的序列号seq=v，此时，服务端就进入了<strong>CLOSE-WAIT</strong>（关闭等待）状态。TCP服务器通知高层的应用进程，客户端向服务器的方向就释放了，这时候处于半关闭状态，即客户端已经没有数据要发送了，但是服务器若发送数据，客户端依然要接受。这个状态还要持续一段时间，也就是整个CLOSE-WAIT状态持续的时间。<br>3）客户端收到服务器的确认请求后，此时，客户端就进入FIN-WAIT-2（终止等待2）状态，等待服务器发送连接释放报文（在这之前还需要接受服务器发送的最后的数据）。<br>4）服务器将最后的数据发送完毕后，就向客户端发送连接释放报文，FIN=1，ack=u+1，由于在半关闭状态，服务器很可能又发送了一些数据，假定此时的序列号为seq=w，此时，服务器就进入了<strong>LAST-ACK</strong>（最后确认）状态，等待客户端的确认。<br>5）客户端收到服务器的连接释放报文后，必须发出确认，ACK=1，ack=w+1，而自己的序列号是seq=u+1，此时，客户端就进入了<strong>TIME-WAIT</strong>（时间等待）状态。<strong>注意此时TCP连接还没有释放</strong>，必须经过2∗∗MSL（<strong>最长报文段寿命</strong>）的时间后，当客户端撤销相应的TCB后，才进入CLOSED状态。<br>6）服务器只要收到了客户端发出的确认，立即进入CLOSED状态。同样，撤销TCB后，就结束了这次的TCP连接。可以看到，服务器结束TCP连接的时间要比客户端早一些。</p>
-<h2 id="4-常见面试题"><a href="#4-常见面试题" class="headerlink" title="4.常见面试题"></a>4.常见面试题</h2><h3 id="1-为什么连接的时候是三次握手，关闭的时候却是四次握手？"><a href="#1-为什么连接的时候是三次握手，关闭的时候却是四次握手？" class="headerlink" title="1.为什么连接的时候是三次握手，关闭的时候却是四次握手？"></a>1.为什么连接的时候是三次握手，关闭的时候却是四次握手？</h3><p>答：因为当Server端收到Client端的SYN连接请求报文后，可以直接发送SYN+ACK报文。其中ACK报文是用来应答的，SYN报文是用来同步的。但是关闭连接时，当Server端收到FIN报文时，很可能并不会立即关闭SOCKET，所以只能先回复一个ACK报文，告诉Client端，”你发的FIN报文我收到了”。只有等到我Server端所有的报文都发送完了，我才能发送FIN报文，因此不能一起发送。故需要四步握手。</p>
-<h3 id="2-为什么TIME-WAIT状态需要经过2MSL-最大报文段生存时间-才能返回到CLOSE状态？"><a href="#2-为什么TIME-WAIT状态需要经过2MSL-最大报文段生存时间-才能返回到CLOSE状态？" class="headerlink" title="2.为什么TIME_WAIT状态需要经过2MSL(最大报文段生存时间)才能返回到CLOSE状态？"></a>2.为什么TIME_WAIT状态需要经过2MSL(最大报文段生存时间)才能返回到CLOSE状态？</h3><p>答：虽然按道理，四个报文都发送完毕，我们可以直接进入CLOSE状态了，但是我们必须假象网络是不可靠的，有可以最后一个ACK丢失。所以TIME_WAIT状态就是用来重发可能丢失的ACK报文。在Client发送出最后的ACK回复，但该ACK可能丢失。Server如果没有收到ACK，将不断重复发送FIN片段。所以Client不能立即关闭，它必须确认Server接收到了该ACK。Client会在发送出ACK之后进入到TIME_WAIT状态。Client会设置一个计时器，等待2MSL的时间。如果在该时间内再次收到FIN，那么Client会重发ACK并再次等待2MSL。所谓的2MSL是两倍的MSL(Maximum Segment Lifetime)。MSL指一个片段在网络中最大的存活时间，2MSL就是一个发送和一个回复所需的最大时间。如果直到2MSL，Client都没有再次收到FIN，那么Client推断ACK已经被成功接收，则结束TCP连接。</p>
-<h3 id="3-为什么不能用两次握手进行连接？"><a href="#3-为什么不能用两次握手进行连接？" class="headerlink" title="3.为什么不能用两次握手进行连接？"></a>3.为什么不能用两次握手进行连接？</h3><p>答：3次握手完成两个重要的功能，既要双方做好发送数据的准备工作(双方都知道彼此已准备好)，也要允许双方就初始序列号进行协商，这个序列号在握手过程中被发送和确认。</p>
-<h3 id="4-如果已经建立了连接，但是客户端突然出现故障了怎么办？"><a href="#4-如果已经建立了连接，但是客户端突然出现故障了怎么办？" class="headerlink" title="4.如果已经建立了连接，但是客户端突然出现故障了怎么办？"></a>4.如果已经建立了连接，但是客户端突然出现故障了怎么办？</h3><p>答：TCP还设有一个保活计时器，显然，客户端如果出现故障，服务器不能一直等下去，白白浪费资源。服务器每收到一次客户端的请求后都会重新复位这个计时器，时间通常是设置为2小时，若两小时还没有收到客户端的任何数据，服务器就会发送一个探测报文段，以后每隔75秒钟发送一次。若一连发送10个探测报文仍然没反应，服务器就认为客户端出了故障，接着就关闭连接。</p>
-<h2 id="5-TCP流量控制（滑动窗口协议）"><a href="#5-TCP流量控制（滑动窗口协议）" class="headerlink" title="5.TCP流量控制（滑动窗口协议）"></a>5.TCP流量控制（滑动窗口协议）</h2><p>TCP流量控制主要是针对接收端的处理速度不如发送端发送速度快的问题，消除发送方使接收方缓存溢出的可能性。<br>TCP流量控制主要使用滑动窗口协议，<strong>滑动窗口是client端使用的窗口大小，用来告诉server端client的缓存大小，以此可以控制发送端发送数据的大小，从而达到流量控制的目的</strong>。<br>这个窗口大小就是我们一次传输几个数据。对所有数据帧按顺序赋予编号，发送方在发送过程中始终保持着一个发送窗口，只有落在发送窗口内的帧才允许被发送；<br>同时接收方也维持着一个接收窗口，只有落在接收窗口内的帧才允许接收。这样通过调整发送方窗口和接收方窗口的大小可以实现流量控制。<br>我们可以通过下图来分析:</p>
-<img src="/2021/07/07/http-note/11.png" class="">
-
-<p>1)发送方接收到了报文 ack=33,win=10，由报文可知，对方收到了33号前的数据，现在期望接收[33,43)号数据。那我们开始发送[33,43)。<br>2）[33, 43) 号的数据你是已经发送了,但接受方并没有接受到[36,37]数据。所以接收方发送回对报文段 A 的确认：ack = 35, win = 10。<br>3）发送方收到了 ack = 35, win = 10，对方期望接收 [35, 45) 号数据。那么发送方在发送[35, 45) 。<br>这里面需要思考一个问题？<br>     第一步发送了[33, 43),如果这次发送[35, 45),那中间重叠部分不是发送了两次,所以这里要思考: 是全部重新发送还是只发送接收端没有收到的数据，如果全部发送，那么重复发送的数据接收端怎么处理。这个下面快速重传会讲。<br>4）接收方接收到了报文段 [35, 41)，接收方发送：ack = 41, win = 10. （这是一个累积确认）<br>5、发送方收到了 ack = 41, win = 10，对方期望接收 [41, 51) 号数据。<br>6、…….<br> 这样一直传输数据,直到数据发送完成。这么一来就保证数据数据的可靠性,因为如果某数据没有获取到,那么ack永远不会跳过它。</p>
-<h2 id="6-TCP拥塞控制"><a href="#6-TCP拥塞控制" class="headerlink" title="6.TCP拥塞控制"></a>6.TCP拥塞控制</h2><h3 id="1-什么是拥塞控制？"><a href="#1-什么是拥塞控制？" class="headerlink" title="1.什么是拥塞控制？"></a>1.什么是拥塞控制？</h3><p>     <strong>流量控制</strong>是通过<strong>接收方</strong>来控制流量的一种方式；而<strong>拥塞控制</strong>则是通过<strong>发送方</strong>来控制流量的一种方式。<br>TCP发送方可能因为IP网络的拥塞而被遏制，TCP拥塞控制就是为了解决这个问题（注意和TCP流量控制的区别）。<br>TCP拥塞控制的几种方法：<br>1）<strong>慢启动</strong><br>2）<strong>拥塞避免</strong><br>3）<strong>快重传</strong><br>4）<strong>快恢复</strong></p>
-<h3 id="2-什么是拥塞窗口？"><a href="#2-什么是拥塞窗口？" class="headerlink" title="2.什么是拥塞窗口？"></a>2.什么是拥塞窗口？</h3><p>拥塞窗口：发送方维持一个叫做拥塞窗口cwnd的状态变量。拥塞窗口的大小取决于网络的拥塞程度，并且动态变化。<br>说明: <strong>发送方取拥塞窗口与滑动窗口的最小值作为发送的上限。</strong><br>发送方控制拥塞窗口的原则是：只要网络没有出现拥塞，拥塞窗口就增大一些，以便把更多的分组发送出去。但只要网络出现拥塞，拥塞窗口就减小一些，以减少<br>注入到网络中的分组数。</p>
-<h3 id="3-慢启动"><a href="#3-慢启动" class="headerlink" title="3.慢启动"></a>3.慢启动</h3><p>TCP在连接过程的三次握手完成后，开始传送数据，并不是一开始向网络通道中发送大量的数据包。因为假如网络出现问题，很多这样的大包会积攒在路由器上，很容易导致网络中路由器缓存空间耗尽，从而发生拥塞。<br>因此，TCP协议规定，新建立的连接不能一开始就发送大尺寸的数据包。只能从小尺寸的包开始发送。在发送和数据被对方确认的过程中去计算对方的接受速度，来逐步增加每次发送的数据量（<strong>最后达到一个稳定的值，进入告诉传输阶段。相应的，慢启动过程中，TCP通道处在低速传输的阶段</strong>）<br>以上就是慢启动策略。用一个简单的原理图来描述一下：</p>
-<img src="/2021/07/07/http-note/12.png" class="">
-<p><strong>拓展：慢启动带来的性能问题如何解决？</strong><br>在迁移海量小文件的需求下，我们不能使用“对每个文件都采用独立的TCP连接来传输（循环使用scp拷贝）“这样的策略，它会使每个文件的传输都处于在一个独立TCP的慢启动。<br>解决方法很简单：<strong>尽量把大量小文件放在一个TCP连接中排队传输</strong>。起初的一两个文件处于慢启动过程传输，后续的文件传输全部处于高速通道中传输，用这样的方式来减少发包的数目，进而降低时间消耗。同样，实际上这种传输策略带来的性能提升的功劳不仅仅归于避免慢启动，<strong>事实上也避免了大量的3次握手和四次握手</strong>，这个对海量小文件传输的性能消耗也非常致命。</p>
-<h3 id="4-拥塞避免"><a href="#4-拥塞避免" class="headerlink" title="4.拥塞避免"></a>4.拥塞避免</h3><p>慢启动中拥塞窗口的cwnd值,开始是1,接下开是指数型增涨的。1、2、4、8、16…..这样涨太快了吧。那么就有了堵塞避免。<br>cwnd不能一直这样无限增长下去，一定需要某个限制。TCP使用了一个叫<strong>慢启动门限(ssthresh)<strong>的变量，一旦</strong>cwnd&gt;=ssthresh</strong>（大多数TCP的实现，通常大小都是（65536），慢启动过程结束，拥塞避免阶段开始；<br>拥塞避免：cwnd的值不再指数级往上升，开始加法增加。此时当窗口中所有的报文段都被确认时，cwnd的大小加1，cwnd的值就随着RTT开始线性增加，这样就可以避免增长过快导致网络拥塞，慢慢的增加调整到网络的最佳值。(它逻辑很简单就是到一定值后,cwnd不在是指数增长,而是+1增长。这样显然慢多了）。<br>非ECN环境下的拥塞判断，发送方RTO超时，重传了一个报文段，它的逻辑如下：<br>      1）把ssthresh降低为cwnd值的一半。<br>      2）把cwnd重新设置为1。<br>      3）重新进入慢启动过程。</p>
-<img src="/2021/07/07/http-note/13.png" class="">
-
-<h3 id="5-快速重传"><a href="#5-快速重传" class="headerlink" title="5.快速重传"></a>5.快速重传</h3><p><strong>TCP要保证所有的数据包都可以到达，所以，必需要有重传机制。</strong><br>接收端给发送端的Ack确认只会确认最后一个连续的包，比如，发送端发了1,2,3,4,5一共五份数据，接收端收到了1，2，于是回ack 3，然后收到了4（注意此时3没收到）<br>此时的TCP会怎么办？我们要知道，因为正如前面所说的，SeqNum和Ack是以字节数为单位，所以ack的时候，不能跳着确认，只能确认最大的连续收到的包，不然，发送端就以为之前的都收到了。<br>1）<strong>超时重传机制</strong><br>一种是不回ack，死等3，当发送方发现收不到3的ack超时后，会重传3。一旦接收方收到3后，会ack 回 4——意味着3和4都收到了。<br>但是，这种方式会有比较严重的问题，那就是因为要死等3，所以会导致4和5即便已经收到了，而发送方也完全不知道发生了什么事，因为没有收到Ack，所以，发送方可能会悲观地认为也丢了，所以有可能也会导致4和5的重传。<br>对此有两种选择：<br>① 一种是仅重传timeout的包。也就是第3份数据。<br>② 另一种是重传timeout后所有的数据，也就是第3，4，5这三份数据。<br>这两种方式有好也有不好。第一种会节省带宽，但是慢，第二种会快一点，但是会浪费带宽，也可能会有无用功。但总体来说都不好。因为都在等timeout，timeout可能会很长。<br>2）<strong>快速重传机制</strong><br>于是，TCP引入了一种叫<strong>Fast Retransmit</strong>的算法，不以时间驱动，而以数据驱动重传。也就是说，如果，包没有连续到达，就ack最后那个可能被丢了的包，如果发送方连续收到3次相同的ack，就重传。Fast Retransmit的好处是不用等timeout了再重传,而是只是三次相同的ack就重传。<br>比如：如果发送方发出了1，2，3，4，5份数据，第一份先到送了，于是就ack回2，结果2因为某些原因没收到，3到达了，于是还是ack回2，后面的4和5都到了，但是还是ack回2因为2还是没有收到，于是发送端收到了三个ack=2的确认，知道了2还没有到，于是就马上重转2。然后，接收端收到了2，此时因为3，4，5都收到了，于是ack回6。</p>
-<img src="/2021/07/07/http-note/14.png" class="">]]></content>
-      <categories>
-        <category>技术笔记</category>
-      </categories>
-      <tags>
-        <tag>网络</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>golang-map</title>
-    <url>/2021/12/18/golang-map/</url>
-    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h2 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h2><h3 id="1-Map的Value赋值"><a href="#1-Map的Value赋值" class="headerlink" title="(1) Map的Value赋值"></a>(1) Map的Value赋值</h3><blockquote>
-<p>下面代码编译会出现什么结果？</p>
-</blockquote>
-<blockquote>
-<p>test7.go</p>
-</blockquote>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
-
-<span class="token keyword">import</span> <span class="token string">"fmt"</span>
-
-<span class="token keyword">type</span> Student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
-    Name <span class="token builtin">string</span>
-<span class="token punctuation">&#125;</span>
-
-<span class="token keyword">var</span> list <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Student
-
-<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-
-    list <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Student<span class="token punctuation">)</span>
-
-    student <span class="token operator">:=</span> Student<span class="token punctuation">&#123;</span><span class="token string">"Aceld"</span><span class="token punctuation">&#125;</span>
-
-    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> student
-    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Name <span class="token operator">=</span> <span class="token string">"LDB"</span>
-
-    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p><strong>结果</strong></p>
-<p>编译失败，<code>./test7.go:18:23: cannot assign to struct field list[&quot;student&quot;].Name in map</code></p>
-<p><strong>分析</strong></p>
-<p><code>map[string]Student</code> 的value是一个Student结构值，所以当<code>list[&quot;student&quot;] = student</code>,是一个值拷贝过程。而<code>list[&quot;student&quot;]</code>则是一个值引用。那么值引用的特点是<code>只读</code>。所以对<code>list[&quot;student&quot;].Name = &quot;LDB&quot;</code>的修改是不允许的。</p>
-<p><strong>方法一：</strong></p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
-
-<span class="token keyword">import</span> <span class="token string">"fmt"</span>
-
-<span class="token keyword">type</span> Student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
-    Name <span class="token builtin">string</span>
-<span class="token punctuation">&#125;</span>
-
-<span class="token keyword">var</span> list <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Student
-
-<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-
-    list <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Student<span class="token punctuation">)</span>
-
-    student <span class="token operator">:=</span> Student<span class="token punctuation">&#123;</span><span class="token string">"Aceld"</span><span class="token punctuation">&#125;</span>
-
-    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> student
-    <span class="token comment">//list["student"].Name = "LDB"</span>
-
-    <span class="token comment">/*
-        方法1:
-    */</span>
-    tmpStudent <span class="token operator">:=</span> list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span>
-    tmpStudent<span class="token punctuation">.</span>Name <span class="token operator">=</span> <span class="token string">"LDB"</span>
-    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> tmpStudent
-
-    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>其中</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">/*
-    方法1:
-*/</span>
-tmpStudent <span class="token operator">:=</span> list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span>
-tmpStudent<span class="token punctuation">.</span>Name <span class="token operator">=</span> <span class="token string">"LDB"</span>
-list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> tmpStudent<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>是先做一次值拷贝，做出一个<code>tmpStudent副本</code>,然后修改该副本，然后再次发生一次值拷贝复制回去，<code>list[&quot;student&quot;] = tmpStudent</code>,但是这种会在整体过程中发生2次结构体值拷贝，性能很差。</p>
-<span id="more"></span>
-
-<p><strong>方法二</strong>：</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
-
-<span class="token keyword">import</span> <span class="token string">"fmt"</span>
-
-<span class="token keyword">type</span> Student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
-    Name <span class="token builtin">string</span>
-<span class="token punctuation">&#125;</span>
-
-<span class="token keyword">var</span> list <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>Student
-
-<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-
-    list <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>Student<span class="token punctuation">)</span>
-
-    student <span class="token operator">:=</span> Student<span class="token punctuation">&#123;</span><span class="token string">"Aceld"</span><span class="token punctuation">&#125;</span>
-
-    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">&amp;</span>student
-    list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>Name <span class="token operator">=</span> <span class="token string">"LDB"</span>
-
-    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>list<span class="token punctuation">[</span><span class="token string">"student"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>我们将map的类型的value由Student值，改成Student指针。</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">var</span> list <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>Student<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>这样，我们实际上每次修改的都是指针所指向的Student空间，指针本身是常指针，不能修改，<code>只读</code>属性，但是指向的Student是可以随便修改的，而且这里并不需要值拷贝。只是一个指针的赋值。</p>
-<h3 id="2-map的遍历赋值"><a href="#2-map的遍历赋值" class="headerlink" title="(2) map的遍历赋值"></a>(2) map的遍历赋值</h3><hr>
-<blockquote>
-<p>以下代码有什么问题，说明原因</p>
-</blockquote>
-<blockquote>
-<p>test8.go</p>
-</blockquote>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
-
-<span class="token keyword">import</span> <span class="token punctuation">(</span>
-    <span class="token string">"fmt"</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">type</span> student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
-    Name <span class="token builtin">string</span>
-    Age  <span class="token builtin">int</span>
-<span class="token punctuation">&#125;</span>
-
-<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    <span class="token comment">//定义map</span>
-    m <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>student<span class="token punctuation">)</span>
-
-    <span class="token comment">//定义student数组</span>
-    stus <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>student<span class="token punctuation">&#123;</span>
-        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"zhou"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">24</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
-        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"li"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">23</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
-        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"wang"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">22</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token comment">//将数组依次添加到map中</span>
-    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> stu <span class="token operator">:=</span> <span class="token keyword">range</span> stus <span class="token punctuation">&#123;</span>
-        m<span class="token punctuation">[</span>stu<span class="token punctuation">.</span>Name<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">&amp;</span>stu
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token comment">//打印map</span>
-    <span class="token keyword">for</span> k<span class="token punctuation">,</span>v <span class="token operator">:=</span> <span class="token keyword">range</span> m <span class="token punctuation">&#123;</span>
-        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>k <span class="token punctuation">,</span><span class="token string">"=>"</span><span class="token punctuation">,</span> v<span class="token punctuation">.</span>Name<span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p><strong>结果</strong></p>
-<p>遍历结果出现错误，输出结果为</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">zhou <span class="token operator">=</span><span class="token operator">></span> wang
-li <span class="token operator">=</span><span class="token operator">></span> wang
-wang <span class="token operator">=</span><span class="token operator">></span> wang<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>map中的3个key均指向数组中最后一个结构体。</p>
-<p><strong>分析</strong></p>
-<p>foreach中，stu是结构体的一个拷贝副本，所以<code>m[stu.Name]=&amp;stu</code>实际上一致指向同一个指针， 最终该指针的值为遍历的最后一个<code>struct的值拷贝</code>。 </p>
-<!-- ![](images/109-foreach.jpeg) -->
-
-<img src="/2021/12/18/golang-map/109-foreach.jpeg" class="" title="foreach">
-
-<p><strong>正确写法</strong></p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
-
-<span class="token keyword">import</span> <span class="token punctuation">(</span>
-    <span class="token string">"fmt"</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">type</span> student <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
-    Name <span class="token builtin">string</span>
-    Age  <span class="token builtin">int</span>
-<span class="token punctuation">&#125;</span>
-
-<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    <span class="token comment">//定义map</span>
-    m <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>student<span class="token punctuation">)</span>
-
-    <span class="token comment">//定义student数组</span>
-    stus <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>student<span class="token punctuation">&#123;</span>
-        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"zhou"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">24</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
-        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"li"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">23</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
-        <span class="token punctuation">&#123;</span>Name<span class="token punctuation">:</span> <span class="token string">"wang"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">22</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token comment">// 遍历结构体数组，依次赋值给map</span>
-    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>stus<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span>  <span class="token punctuation">&#123;</span>
-        m<span class="token punctuation">[</span>stus<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>Name<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">&amp;</span>stus<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token comment">//打印map</span>
-    <span class="token keyword">for</span> k<span class="token punctuation">,</span>v <span class="token operator">:=</span> <span class="token keyword">range</span> m <span class="token punctuation">&#123;</span>
-        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>k <span class="token punctuation">,</span><span class="token string">"=>"</span><span class="token punctuation">,</span> v<span class="token punctuation">.</span>Name<span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<!-- ![](images/110-foreach2.jpeg) -->
-
-<img src="/2021/12/18/golang-map/110-foreach2.jpeg" class="" title="foreach2">
-
-<p><strong>运行结果</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">zhou <span class="token operator">=</span><span class="token operator">></span> zhou
-li <span class="token operator">=</span><span class="token operator">></span> li
-wang <span class="token operator">=</span><span class="token operator">></span> wang<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-]]></content>
-      <categories>
-        <category>技术笔记</category>
-      </categories>
-      <tags>
-        <tag>golang</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>2021-05-01 宜昌游记</title>
-    <url>/2021/06/05/yichang/</url>
-    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script>
-    <div id="aplayer-SNFkMhGi" class="aplayer aplayer-tag-marker meting-tag-marker"
-         data-id="569214247" data-server="netease" data-type="song" data-mode="circulation" data-autoplay="true" data-mutex="true" data-listmaxheight="340px" data-preload="auto" data-theme="#ad7a86"
-    ></div>
-<blockquote>
-<p>2020年疫情之后就没怎么出去旅行过，这次旅行也是期待了很久。<br>出发之前想了很多地方，要么担心疫情要么受时间限制。<br>有一天，ZoSai说，我想喝武汉的排骨藕汤了，我说，走，咱们出发！</p>
-</blockquote>
-<h2 id="Day1-–武汉"><a href="#Day1-–武汉" class="headerlink" title="Day1 –武汉"></a>Day1 –武汉</h2><p>5月1号凌晨我们出发啦！经过5个小时驾车，我们到达了第一站，信阳师范学院，来接着妹妹，做个短暂的休息。</p>
-<img src="/2021/06/05/yichang/xinyang1.jpeg" class="" title="信阳的早晨">
-<img src="/2021/06/05/yichang/xinyang2.jpeg" class="" title="信阳的早晨">
-
-<p>短暂休息过后继续出发，五一假期果然是很堵车啊，到了武汉都中午啦，直奔亢龙太子酒轩，有点遗憾的是排骨藕汤因为藕过了季节，都没有啦。带着但是来都来了，带着遗憾还是在他家吃了</p>
-<img src="/2021/06/05/yichang/chide.jpeg" class="" title="各种吃吃吃">
-
-<p>计划在武汉休整一天，然后去宜昌转转，于是下午就出门啦，去江边逛一逛，去吃一些小吃</p>
-<img src="/2021/06/05/yichang/shapaozi.jpeg" class="" title="傻狍子-ZoSai">
-<img src="/2021/06/05/yichang/qinglvzhuang.jpeg" class="" title="武汉地铁站">
-<p>不知不觉天黑啦，我们也来到了武汉江滩</p>
-<img src="/2021/06/05/yichang/wuhanjiangtan-1.jpeg" class="" title="江滩建筑">
-
-<h2 id="Day2-–宜昌"><a href="#Day2-–宜昌" class="headerlink" title="Day2 –宜昌"></a>Day2 –宜昌</h2><h3 id="江边散步"><a href="#江边散步" class="headerlink" title="江边散步"></a>江边散步</h3><p>第二天一早就从武汉出发去往了宜昌，宜昌是一个生活节奏很慢的城市，在宜昌待的三天整个人都慢了下来，非常舒服</p>
-<img src="/2021/06/05/yichang/jiangbian-1.jpeg" class="" title="宜昌江滩">
-<p>江滩还用无人机拍了一小段视频~</p>
-
-<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
-<iframe src="//player.bilibili.com/player.html?aid=205420506&bvid=BV1Bh411m7AL&cid=335880504&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" ></iframe></div>
-
-
-<h3 id="把把烧"><a href="#把把烧" class="headerlink" title="把把烧"></a>把把烧</h3><p>宜昌非常有名的小吃把把烧 配上夺命大乌苏，绝绝子<br>对了，宜昌的萝卜饺子也特别好吃，还有什么鱼鱼，可惜光顾着吃了，忘记拍照啦</p>
-<img src="/2021/06/05/yichang/babashao.jpeg" class="" title="把把烧">
-
-<h2 id="Day3-–三峡人家"><a href="#Day3-–三峡人家" class="headerlink" title="Day3 –三峡人家"></a>Day3 –三峡人家</h2><p>第三天我们去了宜昌非常有名的三峡人家风景区，三峡人家位于长江夷陵峡上游，去的时候需要坐摆渡船，逆流而上。</p>
-<img src="/2021/06/05/yichang/sanxiarenjia-1.jpeg" class="" title="去景区的船上，阴雨绵绵">
-<img src="/2021/06/05/yichang/sanxiarenjia-2.jpeg" class="" title="景区码头">
-<p>此情此景让我想到一首诗句<br>两岸猿声啼不住 轻舟已过万重山</p>
-<img src="/2021/06/05/yichang/sanxiarenjia-3.jpeg" class="" title="一叶扁舟">
-
-<p>进入景区内部，天气阴转晴，风景拍出来也更加美丽</p>
-<img src="/2021/06/05/yichang/sanxiarenjia4.jpeg" class="" title="三峡人家">
-<img src="/2021/06/05/yichang/yichang-4.jpeg" class="" title="三峡人家">
-<img src="/2021/06/05/yichang/yichang-5.jpeg" class="" title="三峡人家">
-<img src="/2021/06/05/yichang/yichang-6.jpeg" class="" title="三峡人家">
-<p>游记的最后，用一个小短片总结一下吧~期待我们的下次旅行</p>
-
-<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
-<iframe src="//player.bilibili.com/player.html?aid=592908430&bvid=BV1pq4y127BX&cid=479280797&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" ></iframe></div>
-]]></content>
-      <categories>
-        <category>游记</category>
-      </categories>
-      <tags>
-        <tag>旅行</tag>
       </tags>
   </entry>
 </search>

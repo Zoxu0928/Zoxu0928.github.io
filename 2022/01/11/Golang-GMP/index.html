@@ -457,14 +457,14 @@
 <p>    <code>并行</code>则依赖于多核处理器等物理资源，让多个任务可以并行执行（并发且并行）。</p>
 <p>     <img src="/2022/01/11/Golang-GMP/1.png" class="" title="多线程&#x2F;多进程操作系统"></p>
 <h1 id="一、Golang调度器的由来"><a href="#一、Golang调度器的由来" class="headerlink" title="一、Golang调度器的由来"></a>一、Golang调度器的由来</h1><p>    前言中说道，多线程\多进程的操作系统中，解决了阻塞的问题。但是新的问题又出现了，进程拥有太多的资源，进程的创建、切换、销毁都会占用很长的时间。如果进程过多，CPU很大的一部分都用来进行进程调度了。</p>
-<img src="/2022/01/11/Golang-GMP/1.png" class="" title="cpu浪费时间成本">
+<img src="/2022/01/11/Golang-GMP/2.png" class="" title="cpu浪费时间成本">
 
 <h2 id="1-协程来提高CPU利用率"><a href="#1-协程来提高CPU利用率" class="headerlink" title="1.协程来提高CPU利用率"></a>1.协程来提高CPU利用率</h2><p>    多线程、多进程已经提高了系统的并发能力，但是在当今互联网高并发场景下，为每个任务都创建一个线程是不现实的，会消耗大量的内存。</p>
 <p>    <strong>引入<code>内核态</code>线程和<code>用户态</code>线程</strong></p>
 <blockquote>
 <p> 一个“用户态线程”必须要绑定一个“内核态线程”，但是CPU并不知道有“用户态线程”的存在。它只知道它运行的是一个“内核态线程”。</p>
 </blockquote>
-<p>        <img src="/2022/01/11/Golang-GMP/3.png" class=""></p>
+<p>    <img src="/2022/01/11/Golang-GMP/3.png" class=""></p>
 <p>    再去细化分类一下，内核线程依然叫做<code>线程(thread)</code>，用户线程叫做<code>协程(co-routine)</code></p>
 <p>      <img src="/2022/01/11/Golang-GMP/4.png" class=""></p>
 <h2 id="2-线程-thread-和协程-co-routine-的3种关系"><a href="#2-线程-thread-和协程-co-routine-的3种关系" class="headerlink" title="2.线程(thread)和协程(co-routine)的3种关系"></a>2.线程(thread)和协程(co-routine)的3种关系</h2><h3 id="1）N-1-关系"><a href="#1）N-1-关系" class="headerlink" title="1）N:1 关系"></a>1）N:1 关系</h3><p>    即<code>N个协程绑定1个线程</code>，优点是<strong>协程在用户态线程即完成切换，不会陷入内核态，切换轻量且快速</strong>。缺点：1个进程的所有协程都绑定在1个线程上。一旦某个协程阻塞，造成线程阻塞，本进程的其他协程都无法进行了，根本没有并发能力。</p>
@@ -563,7 +563,7 @@
 <li><p>M：线程想运行任务就得获取P，从P的本地队列获取G。</p>
 </li>
 </ul>
-<h2 id="2-M的工作流程"><a href="#2-M的工作流程" class="headerlink" title="2.M的工作流程"></a>2.M的工作流程</h2><ul>
+<h2 id="2-GMP的工作流程"><a href="#2-GMP的工作流程" class="headerlink" title="2.GMP的工作流程"></a>2.GMP的工作流程</h2><ul>
 <li>新建<code>G</code>时，新<code>G</code>会优先加入到<code>P</code>的本地队列。如果本地队列满了，则会把本地队列中一半的G移动到全局队列。</li>
 </ul>
 <p>    <img src="/2022/01/11/Golang-GMP/GMP-1.gif" class="" title="GMP模型"></p>
