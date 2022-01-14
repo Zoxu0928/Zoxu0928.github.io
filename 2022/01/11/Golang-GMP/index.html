@@ -690,9 +690,13 @@
 <h2 id="场景11"><a href="#场景11" class="headerlink" title="场景11"></a>场景11</h2><p>G8 创建了 G9，假如 G8 进行了<strong>非阻塞系统调用</strong>。</p>
 <p> <img src="/2022/01/11/Golang-GMP/22.png" class=""></p>
 <p>​ M2 和 P2 会解绑，但 M2 会记住 P2，然后 G8 和 M2 进入系统调用状态。当 G8 和 M2 退出系统调用时，会尝试获取 P2，如果无法获取，则获取空闲的 P，如果依然没有，G8 会被记为可运行状态，并加入到全局队列，M2 因为没有 P 的绑定而变成休眠状态 (长时间休眠等待 GC 回收销毁)。</p>
-<h1 id="五、小结"><a href="#五、小结" class="headerlink" title="五、小结"></a>五、小结</h1><p>总结，Go 调度器很轻量也很简单，足以撑起 goroutine 的调度工作，并且让 Go 具有了原生（强大）并发的能力。<strong>Go 调度本质是把大量的 goroutine 分配到少量线程上去执行，并利用多核并行，实现更强大的并发</strong>。</p>
+<h1 id="五、源码分析GMP模型"><a href="#五、源码分析GMP模型" class="headerlink" title="五、源码分析GMP模型"></a>五、源码分析GMP模型</h1><blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/sunsky303/p/9705727.html">深入Golang调度器之GMP模型 - sunsky303 - 博客园</a></p>
+</blockquote>
+<h1 id="六、小结"><a href="#六、小结" class="headerlink" title="六、小结"></a>六、小结</h1><p>总结，Go 调度器很轻量也很简单，足以撑起 goroutine 的调度工作，并且让 Go 具有了原生（强大）并发的能力。<strong>Go 调度本质是把大量的 goroutine 分配到少量线程上去执行，并利用多核并行，实现更强大的并发</strong>。</p>
 <h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p>[1]《Golang 调度器 GMP 原理与调度全分析》 ——Aceld :<a target="_blank" rel="noopener" href="https://learnku.com/articles/41728">https://learnku.com/articles/41728</a></p>
 <p>[2]《GMP模型为什么要有P》 ——煎鱼:<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/an7dml9NLOhqOZjEGLdEEw">https://mp.weixin.qq.com/s/an7dml9NLOhqOZjEGLdEEw</a></p>
+<p>[3]《深入Golang调度器之GMP模型》 ——健の随笔:<a target="_blank" rel="noopener" href="https://www.cnblogs.com/sunsky303/p/9705727.html">https://www.cnblogs.com/sunsky303/p/9705727.html</a>)</p>
 
                 
             </div>
@@ -761,29 +765,29 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="far fa-dot-circle"></i>&nbsp;本篇
-            </div>
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2022/01/11/Golang-GMP/">
+                <a href="/2022/01/14/ARM64-TroubleShooting/">
                     <div class="card-image">
                         
-                        <img src="/images/GMP.png" class="responsive-img" alt="Golang调度器GMP模型-学习笔记">
                         
-                        <span class="card-title">Golang调度器GMP模型-学习笔记</span>
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="记录一次go编译遇到坑">
+                        
+                        <span class="card-title">记录一次go编译遇到坑</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            关于GMP的学习笔记
+                            记录arm架构下使用goland启动工程遇到的坑
                         
                     </div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-01-11
-                            </span>
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2022-01-14
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -796,20 +800,11 @@
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">
-                        <span class="chip bg-color">读书笔记</span>
-                    </a>
-                    
-                    <a href="/tags/golang/">
-                        <span class="chip bg-color">golang</span>
-                    </a>
-                    
-                    <a href="/tags/GMP/">
-                        <span class="chip bg-color">GMP</span>
+                    <a href="/tags/go-build%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/">
+                        <span class="chip bg-color">go build遇到的坑</span>
                     </a>
                     
                 </div>
