@@ -22,6 +22,156 @@
       </tags>
   </entry>
   <entry>
+    <title>图解Go语言内存管理机制</title>
+    <url>/2022/02/12/golang-memory-management/</url>
+    <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="图解Go语言内存管理机制"><a href="#图解Go语言内存管理机制" class="headerlink" title="图解Go语言内存管理机制"></a>图解Go语言内存管理机制</h1><h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>Go语言内置运行时（也就是runtime），抛弃了传统的内存分配方式，改为自主管理。这样可以自主的实现更好的内存使用模式，比如内存池，预分配等等。这样，不会每次内存分配都需要进行系统调用。</p>
+<h1 id="核心思想"><a href="#核心思想" class="headerlink" title="核心思想"></a>核心思想</h1><p>Go内存分配的核心思想可以分为以下几点：</p>
+<ol>
+<li><p>每次从操作系统申请一大块的内存，由Go来对这块内存做分配，减少系统调用。</p>
+</li>
+<li><p>内存分配算法采用Google的<code>TCMalloc</code>算法。核心思想是把内存切分的非常的细小，分为多级管理，以降低锁的粒度。</p>
+</li>
+<li><p>回收对象内存时，并没有将其真正释放掉，只是放回预先分配的大块内存中,以便复用。只有内存闲置过多的时候，才会尝试归还部分内存给操作系统，降低整体开销。</p>
+</li>
+</ol>
+<h1 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h1><h2 id="Go的内存结构"><a href="#Go的内存结构" class="headerlink" title="Go的内存结构"></a>Go的内存结构</h2><p>Go在程序启动的时候,会先向操作系统申请一块内存(注意这个时候还只是一段虚拟的地址空间,并不会真正的分配内存)切成小块后自己进行管理。<br><br>申请到的内存块被分配了三个区域，在x64上分别是512MB，16GB，512GB。</p>
+<p><img src="/2022/02/12/golang-memory-management/1.jpeg"></p>
+<h3 id="arena区域"><a href="#arena区域" class="headerlink" title="arena区域"></a>arena区域</h3><p><code>arena</code>就是我们所谓的堆区。Go动态分配内存都是在这个区域，它把内存分割成<code>8KB</code>大小的页，一些页组合起来成为<code>mspan</code>。<br><br> arena中按照<code>管理</code>和<code>使用</code>两个维度可认为存在两类东西：<br></p>
+<ul>
+<li><strong>管理分配角度</strong><br></li>
+</ul>
+<p>由多个连续的页(page)组成的大块内存：</p>
+<p><img src="/2022/02/12/golang-memory-management/2.png" title="管理角度"><br></p>
+<ul>
+<li><strong>使用角度</strong> <br></li>
+</ul>
+<p>从使用角度出发，就是平时咱们所了解的:<code>heap</code>中存在很多对象。</p>
+<p><img src="/2022/02/12/golang-memory-management/3.png" title="使用角度"></p>
+<h3 id="bitmap区域"><a href="#bitmap区域" class="headerlink" title="bitmap区域"></a>bitmap区域</h3><p>标识<code>arena</code>区域哪些地址保存了对象，并且用<code>4bit</code>标志位标识对象是否包含<code>指针</code>、<code>GC</code>标记信息。<code>bitmap</code>中一个byte大小的内存对应<code>arena</code>区域中4个指针大小（指针大小为8B）的内存，所以<code>bitmap</code>区域的大小是<code>512GB/(4*8B)=16GB</code>。<br></p>
+<p><img src="/2022/02/12/golang-memory-management/4.jpeg"></p>
+<p><img src="/2022/02/12/golang-memory-management/5.jpeg"></p>
+<p>从上图其实还可以看到bitmap的高地址部分指向arena区域的低地址部分，也就是说bitmap的地址是由高地址向低地址增长的。<br><code>bitmap主要的作用还是服务于GC</code></p>
+<h3 id="spans区域"><a href="#spans区域" class="headerlink" title="spans区域"></a>spans区域</h3><p><code>spans</code>区域存放mspan的指针。每个指针对应一页，所以<code>spans</code>区域的大小就是512GB/8KB*8B=512MB。<br><br>创建mspan的时候，按页填充对应的spans区域，在回收Object时，根据地址很容易就能找到它所属的mspan。<br><br><code>span</code>区域用于表示arena区域中的某一页(page)属于哪个mspan<br><img src="/2022/02/12/golang-memory-management/6.png"><br><code>mspan是go内存管理的最基本单元</code>，但是内存的使用最终还是要落在对象上。对象放在page中。<code>page是内存存储的最基本单元</code></p>
+<h2 id="内存管理组件"><a href="#内存管理组件" class="headerlink" title="内存管理组件"></a>内存管理组件</h2><p>go的内存管理组件主要有：<code>mspan</code>、<code>mcache</code>、<code>mcentral</code>和<code>mheap</code></p>
+<ul>
+<li>mspan为内存管理的基础单元，直接存储数据的地方</li>
+<li>每个运行期的goroutine都会绑定一个mcache（具体来讲就是绑定GMP并发模型中的P，所以可以无锁分配mspan），mcache会分配goroutine运行中所需要的内存空间。</li>
+<li>mcentral为所有mcache切分好后备的mspan</li>
+<li>mheap代表Go程序持有的所有堆空间。还会管理闲置的mspan，需要时向操作系统申请新内存</li>
+</ul>
+<h3 id="mspan"><a href="#mspan" class="headerlink" title="mspan"></a>mspan</h3><p>mspan结构体定义</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// path: /usr/local/go/src/runtime/mheap.go</span>
+
+<span class="token keyword">type</span> mspan <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">//链表前向指针，用于将span链接起来</span>
+    next <span class="token operator">*</span>mspan 
+    <span class="token comment">//链表前向指针，用于将span链接起来</span>
+    prev <span class="token operator">*</span>mspan 
+    <span class="token comment">// 起始地址，也即所管理页的地址</span>
+    startAddr <span class="token builtin">uintptr</span> 
+    <span class="token comment">// 管理的页数</span>
+    npages <span class="token builtin">uintptr</span> 
+    <span class="token comment">// 块个数，表示有多少个块可供分配</span>
+    nelems <span class="token builtin">uintptr</span> 
+
+    <span class="token comment">//分配位图，每一位代表一个块是否已分配</span>
+    allocBits <span class="token operator">*</span>gcBits 
+
+    <span class="token comment">// 已分配块的个数</span>
+    allocCount <span class="token builtin">uint16</span> 
+    <span class="token comment">// class表中的class ID，和Size Classs相关</span>
+    spanclass spanClass  
+
+    <span class="token comment">// class表中的对象大小，也即块大小</span>
+    elemsize <span class="token builtin">uintptr</span> 
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>将<code>mspan</code>放到更大的视角来看：<br><img src="/2022/02/12/golang-memory-management/7.png"><br><code>mspan是go内存管理的最基本单元</code>，但是内存的使用最终还是要落在对象上。对象放在page中。<code>page是内存存储的最基本单元</code><br><code>mspan</code>就是方便根据对象大小来分配使用的内存块，一共有67种类型。解决了：<code>内存碎片问题，减少了内存碎片，提高了内存使用率</code></p>
+<h3 id="mcache"><a href="#mcache" class="headerlink" title="mcache"></a>mcache</h3><p><code>mcache</code>:每个工作线程都会绑定一个mcache，本地缓存可用的<code>mspan</code>资源,这样就可以直接给goroutine分配，避免了多线程申请内存时不断的加锁的问题。<br><code>mcache</code>的结构体定义：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">//path: /usr/local/go/src/runtime/mcache.go</span>
+<span class="token keyword">type</span> mcache <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    alloc <span class="token punctuation">[</span>numSpanClasses<span class="token punctuation">]</span><span class="token operator">*</span>mspan
+<span class="token punctuation">&#125;</span>
+
+numSpanClasses <span class="token operator">=</span> _NumSizeClasses <span class="token operator">&lt;&lt;</span> <span class="token number">1</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>mcache在GMP模型中是在P上的，因为运行期间一个goroutine只能和一个P关联。所以不可能有锁的竞争。如下图所示：</br><br><img src="/2022/02/12/golang-memory-management/8.png"></p>
+<p>再来看一下mcache的具体结构：<br><img src="/2022/02/12/golang-memory-management/9.png"><br><code>mcache</code>用<code>spacn Classes</code>作为索引管理多个用于分配的<code>mspan</code>，它包含所有规格的<code>mspan</code>。<br>mcache中的span链表分为两组，一组是包含指针类型的对象，另一组是不包含指针类型的对象。</br><br>为了方便GC,在进行垃圾回收的时候，对于不包含指针的对象列表无需进一步扫描是否引用其他活跃的对象。</br><br>对于&lt;=32KB的对象，将直接通过mcache分配。</br><br>go中对象按照大小的维度，分为三类：</p>
+<ul>
+<li>tinny allocations(size &lt; 16 bytes,no pointers)</li>
+<li>small allocations(16bytes &lt; size &lt;= 32kb)</li>
+<li>large allocations(size &gt; 32 kb)<br>前两类：tiny allocations 和 small allocations 是直接通过mcache来分配的</li>
+</ul>
+<p>对于tinny allocations的分配，有一个微型分配器tinny allocator来分配，分配的对象都是不包含指针的，例如一些小的字符串和不包含指针的独立的逃逸变量等。</br><br>对于small allocations的分配，就是macache根据对象的大小找自身存在的大小相匹配的mspan来分配。当mcache没用可用空间时，就从mcentral的mspans列表获取一个新的所需大小规格的mspan<br>对于large allocations的分配，直接通过mheap分配。这些大对象的申请是以一个全局锁为代价的，因此任何给定的时间点只能同时供一个P申请。</p>
+<h3 id="mcentral"><a href="#mcentral" class="headerlink" title="mcentral"></a>mcentral</h3><p><code>mecntral</code>：为所有<code>mcache</code>提供切分好的mspan资源。每个central保存一种特定大小的全局mspan列表，包括已分配出去的和未分配出去的。每个mcentral对应一种mspan，而mspan的种类导致它分割的object大小不同。当工作线程的mcache中没有合适的mspan时就会从mcentral获取。</br><br><code>mcentral</code>被所有的工作线程共同享有，存在多个goroutine竞争的情况，因此会消耗锁资源。结构定义：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">//path: /usr/local/go/src/runtime/mcentral.go</span>
+
+<span class="token keyword">type</span> mcentral <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 互斥锁</span>
+    lock mutex 
+    <span class="token comment">// 规格</span>
+    sizeclass <span class="token builtin">int32</span> 
+    <span class="token comment">// 尚有空闲object的mspan链表</span>
+    nonempty mSpanList 
+    <span class="token comment">// 没有空闲object的mspan链表，或者是已被mcache取走的msapn链表</span>
+    empty mSpanList 
+    <span class="token comment">// 已累计分配的对象个数</span>
+    nmalloc <span class="token builtin">uint64</span> 
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="/2022/02/12/golang-memory-management/10.png"><br><code>empty</code>表示这条链表里的mspan都被分配了object，或者是已经被cache取走了的mspan，这个mspan就被那个工作线程独占了。</br><br>而<code>nonempty</code>则表示有空闲对象的mspan列表。每个central结构体都在mheap中维护。</p>
+<p>简单说下mcache从mcentral获取和归还mspan的流程：</p>
+<ul>
+<li>获取 加锁；从nonempty链表找到一个可用的mspan；并将其从nonempty链表删除；将取出的mspan加入到empty链表；将mspan返回给工作线程；解锁。</li>
+<li>归还 加锁；将mspan从empty链表删除；将mspan加入到nonempty链表；解锁。</li>
+</ul>
+<h3 id="mheap"><a href="#mheap" class="headerlink" title="mheap"></a>mheap</h3><p><code>mheap</code>:代表Go程序持有的所有堆空间，Go程序使用一个mheap的全局对象_mheap来管理堆内存。</br><br>当<code>mcentral</code>没有空闲的mspan时，会向mheap申请，而mheap没有资源时，会向操作系统申请新内存。mheap主要用于大对象的内存分配，以及管理未切割的mspan，用于给mcentral切割成小对象。</br><br>同时我们也看到，mheap中含有所有规格的mcentral，所以，当一个mcache从mcentral申请mspan时，只需要在独立的mcentral中使用锁，并不会影响申请其他规格的mspan。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">//path: /usr/local/go/src/runtime/mheap.go</span>
+
+<span class="token keyword">type</span> mheap <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    lock mutex
+    <span class="token comment">// spans: 指向mspans区域，用于映射mspan和page的关系</span>
+    spans <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>mspan 
+    <span class="token comment">// 指向bitmap首地址，bitmap是从高地址向低地址增长的</span>
+    bitmap <span class="token builtin">uintptr</span> 
+
+    <span class="token comment">// 指示arena区首地址</span>
+    arena_start <span class="token builtin">uintptr</span> 
+    <span class="token comment">// 指示arena区已使用地址位置</span>
+    arena_used  <span class="token builtin">uintptr</span> 
+    <span class="token comment">// 指示arena区末地址</span>
+    arena_end   <span class="token builtin">uintptr</span> 
+
+    central <span class="token punctuation">[</span><span class="token number">67</span><span class="token operator">*</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+        mcentral mcentral
+        pad <span class="token punctuation">[</span>sys<span class="token punctuation">.</span>CacheLineSize <span class="token operator">-</span> unsafe<span class="token punctuation">.</span><span class="token function">Sizeof</span><span class="token punctuation">(</span>mcentral<span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token operator">%</span>sys<span class="token punctuation">.</span>CacheLineSize<span class="token punctuation">]</span><span class="token builtin">byte</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><img src="/2022/02/12/golang-memory-management/11.png"></p>
+<h1 id="分配顺序"><a href="#分配顺序" class="headerlink" title="分配顺序"></a>分配顺序</h1><ul>
+<li>&lt;=16B 的对象使用mcache的tiny分配器分配；</li>
+<li>大于32KB 的对象，直接从mheap上分配；</li>
+<li>(16B,32KB] 的对象，首先计算对象的规格大小，然后使用mcache中相应规格大小的mspan分配；</li>
+<li>如果mcache没有相应规格大小的mspan，则向mcentral申请</li>
+<li>如果mcentral没有相应规格大小的mspan，则向mheap申请</li>
+<li>如果mheap中也没有合适大小的mspan，则向操作系统申请</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ul>
+<li>Go在程序启动时，会向操作系统申请一大块内存，之后自行管理。</li>
+<li>Go内存管理的基本单元是mspan，它由若干个页组成，每种mspan可以分配特定大小的object。</li>
+<li>mcache, mcentral, mheap是Go内存管理的三大组件，层层递进。mcache管理线程在本地缓存的mspan；mcentral管理全局的mspan供所有线程使用；mheap管理Go的所有动态分配内存。</li>
+<li>极小对象会分配在一个object中，以节省资源，使用tiny分配器分配内存；一般小对象通过mspan分配内存；大对象则直接由mheap分配内存。</li>
+</ul>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p>[1]《图解Go语言内存分配》 ——Stefno :<a href="https://zhuanlan.zhihu.com/p/59125443">https://zhuanlan.zhihu.com/p/59125443</a></p>
+]]></content>
+      <categories>
+        <category>技术笔记</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+        <tag>golang</tag>
+        <tag>内存管理</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>记录一次go编译遇到坑</title>
     <url>/2022/01/14/ARM64-TroubleShooting/</url>
     <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script><h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>    最近以低廉价格购入了一台99新的macbook pro，m1芯片的，到手之后就迫不及待的想试一下性能。正好因为疫情被要求居家隔离14天，于是乎就拿着这台m1开始居家办公。</p>
@@ -615,7 +765,7 @@ wang <span class="token operator">=</span><span class="token operator">></span> 
     <title>我求婚啦</title>
     <url>/2021/10/05/MarryHer/</url>
     <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script>
-    <div id="aplayer-JTsqQeFE" class="aplayer aplayer-tag-marker meting-tag-marker"
+    <div id="aplayer-ltJUdUyF" class="aplayer aplayer-tag-marker meting-tag-marker"
          data-id="29539085" data-server="netease" data-type="song" data-mode="circulation" data-autoplay="true" data-mutex="true" data-listmaxheight="340px" data-preload="auto" data-theme="#ad7a86"
     ></div>
 <blockquote>
@@ -806,7 +956,7 @@ wang <span class="token operator">=</span><span class="token operator">></span> 
     <title>2021-05-01 宜昌游记</title>
     <url>/2021/06/05/yichang/</url>
     <content><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="/assets/css/APlayer.min.css"><script src="/assets/js/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="/assets/js/Meting.min.js"></script>
-    <div id="aplayer-SNFkMhGi" class="aplayer aplayer-tag-marker meting-tag-marker"
+    <div id="aplayer-JqMVxBJW" class="aplayer aplayer-tag-marker meting-tag-marker"
          data-id="569214247" data-server="netease" data-type="song" data-mode="circulation" data-autoplay="true" data-mutex="true" data-listmaxheight="340px" data-preload="auto" data-theme="#ad7a86"
     ></div>
 <blockquote>
